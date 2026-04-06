@@ -10,7 +10,7 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 - Network ping in `ms`
 - Battery percent display
 - Battery warning when `<= 20%`
-- Sensor mode label: `RGB`
+- Visual mode label, default `RGB`
 
 ### Main Video Area
 - `VideoStream`: render MJPEG source
@@ -28,6 +28,7 @@ Detailed UI/component contracts extracted from the capstone interface spec.
   - last class
   - confidence
   - current mode
+  - visual mode
   - frame delay
   - FPS
 

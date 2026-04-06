@@ -17,7 +17,7 @@ export default function App() {
   const ActivePage = tabs[activeTab] ?? Dashboard;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex h-screen flex-col overflow-hidden bg-mission-bg text-mission-text">
       <TopBar activeTab={activeTab} onTabChange={setActiveTab} />
       <ActivePage />
     </div>

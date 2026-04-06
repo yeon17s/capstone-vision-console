@@ -8,6 +8,7 @@ Text summary of `docs/wireframe/*.png` for low-token prompt reuse.
 - Slight glow on active elements; soft green/blue/red accents
 - Dense dashboard layout with clear panel borders, not airy card spacing
 - Typography is condensed, uppercase-heavy, industrial/monitor-like
+- Keep the base UI mostly neutral; accents should be sparse and intentional
 
 ## System Color Palette
 - CSS tokens are defined in `src/index.css`
@@ -16,16 +17,33 @@ Text summary of `docs/wireframe/*.png` for low-token prompt reuse.
   - `mission.panel`
   - `mission.border`
   - `mission.text`
+  - `mission.primary`
+  - `mission.secondary`
   - `mission.active`
   - `mission.info`
   - `mission.critical`
   - `mission.suspicious`
 - Semantic color rules:
-  - active / confirmed -> green
-  - info / navigation -> blue
+  - selected / current focus / current mode -> blue
+  - active / connected / confirmed -> green
   - critical / emergency -> red
   - suspicious / low-confidence candidate -> yellow
   - placeholder / inactive -> gray
+
+## Reduced Palette Rule
+- Default screen composition should be mostly:
+  - neutral panels
+  - neutral borders
+  - white/light text
+- Use blue as the primary accent for selected, current, or focused UI state
+- Use green for healthy, connected, active, or confirmed system state
+- Use red only for danger, emergency, critical detection, or destructive actions
+- Use yellow only for suspicious or pending states
+- Avoid showing green, blue, yellow, and red with equal visual weight in the same region
+- In one local UI region, prefer at most:
+  - one primary accent
+  - one exception accent for warning or danger
+- If a label does not express state or action priority, keep it neutral
 
 ## Palette Usage
 - Use semantic names in code, not raw color names only
@@ -34,10 +52,14 @@ Text summary of `docs/wireframe/*.png` for low-token prompt reuse.
   - panel surface -> `mission.panel`
   - panel outline / grid line -> `mission.border`
   - primary text / telemetry -> `mission.text`
-  - active tab / healthy status dot -> `mission.active`
-  - neutral tab / info badge -> `mission.info`
+  - selected tab / current mode / selected control -> `mission.primary` or `mission.info`
+  - healthy status dot / confirmed state -> `mission.secondary` or `mission.active`
   - E-stop / critical overlay / danger badge -> `mission.critical`
   - suspicious detection / pending state -> `mission.suspicious`
+- Strong recommendation:
+  - use `mission.info` for selection, not for every decorative highlight
+  - prefer neutral text for static labels
+  - reserve accent fills for selected, dangerous, or actionable elements
 
 ## Opacity Guide
 - Mission-control UI often uses low-alpha accents for glow and overlays
@@ -162,7 +184,9 @@ Text summary of `docs/wireframe/*.png` for low-token prompt reuse.
 - Use thumbnails and mini-panels for logs/alerts instead of large media cards
 - Support COD-specific ambiguity states instead of binary detected/not-detected only
 - Favor operator feedback hooks that can later support dataset correction or retraining workflows
+- Reduce accent competition before adding new styling detail
+- Neutral layout first, accent second
 
 ## Prompt Shortcut
 - If only one line is needed in a prompt:
-  - "Use the wireframe style: dark mission-control UI, outlined panels, dense dashboard, blue/green status accents, red critical alerts, large left video area, narrow right control column."
+  - "Use the wireframe style: dark mission-control UI, outlined panels, dense dashboard, blue for selected UI, green for healthy status, red for critical alerts, large left video area, narrow right control column."
