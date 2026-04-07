@@ -3,6 +3,8 @@ import type { RowStatus } from "../../pages/History";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
+import StatusBadge from "../ui/StatusBadge";
+import StatusIndicator from "../ui/StatusIndicator";
 
 interface DetailModalProps {
   entry: DetectionLogEntry | null;
@@ -64,10 +66,10 @@ function ConfidenceDonut({ conf }: { conf: number }) {
   );
 }
 
-const STATUS_LABEL: Record<RowStatus, { label: string; cls: string }> = {
-  Confirmed:     { label: "Confirmed",      cls: "text-mission-secondary border-mission-secondary/40 bg-mission-secondary/5" },
-  Pending:       { label: "Pending Review", cls: "text-mission-suspicious border-mission-suspicious/40 bg-mission-suspicious/5" },
-  FalsePositive: { label: "False Positive", cls: "text-mission-text/40 border-mission-border bg-mission-border/10" },
+const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warning" | "muted" }> = {
+  Confirmed:     { label: "Confirmed", tone: "success" },
+  Pending:       { label: "Pending Review", tone: "warning" },
+  FalsePositive: { label: "False Positive", tone: "muted" },
 };
 
 export default function DetailModal({ entry, status, onMarkFalsePositive }: DetailModalProps) {
@@ -79,7 +81,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
     );
   }
 
-  const { label: statusLabel, cls: statusCls } = STATUS_LABEL[status];
+  const { label: statusLabel, tone: statusTone } = STATUS_LABEL[status];
   const isFalsePositive = status === "FalsePositive";
 
   return (
@@ -88,9 +90,9 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
       title="Detail View"
       headerRight={
         <div className="flex items-center gap-2">
-          <Typography as="span" variant="overline" className={`rounded border px-2 py-0.5 font-bold ${statusCls}`}>
+          <StatusBadge tone={statusTone}>
             {statusLabel}
-          </Typography>
+          </StatusBadge>
           {!isFalsePositive && (
             <Button
               onClick={onMarkFalsePositive}
@@ -114,8 +116,23 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
           <MetaRow label="Class"       value={entry.class} />
           <MetaRow label="Mode"        value={entry.mode ?? "RGB"} accent />
           <MetaRow label="BBox"        value={`{${entry.bbox.x}, ${entry.bbox.y}, ${entry.bbox.w}, ${entry.bbox.h}}`} mono />
-          <MetaRow label="FPS"         value={entry.fps.toFixed(1)} mono />
-          <MetaRow label="Frame Delay" value={`${entry.frameDelayMs} ms`} mono />
+          <div className="flex items-baseline gap-2">
+            <Typography as="span" variant="overline" tone="subtle" className="min-w-[110px]">
+              FPS
+            </Typography>
+            <StatusIndicator tone="info" label={entry.fps.toFixed(1)} showDot={false} textVariant="monoStrong" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <Typography as="span" variant="overline" tone="subtle" className="min-w-[110px]">
+              Frame Delay
+            </Typography>
+            <StatusIndicator
+              tone={entry.frameDelayMs <= 60 ? "success" : entry.frameDelayMs <= 120 ? "warning" : "danger"}
+              label={`${entry.frameDelayMs} ms`}
+              showDot={false}
+              textVariant="monoStrong"
+            />
+          </div>
         </div>
 
         {/* Image comparison */}

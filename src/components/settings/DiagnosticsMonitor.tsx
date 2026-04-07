@@ -1,5 +1,6 @@
 import Typography from "../ui/Typography";
 import MissionPanel, { MissionCard } from "../ui/MissionPanel";
+import StatusIndicator from "../ui/StatusIndicator";
 
 type DiagStatus = "active" | "warning" | "error" | "unknown";
 
@@ -17,18 +18,18 @@ const DIAG_ITEMS: DiagItem[] = [
   { label: "AI Model",             detail: "Loaded",       status: "active" },
 ];
 
-const DOT: Record<DiagStatus, string> = {
-  active:  "bg-mission-active  shadow-[0_0_6px_var(--color-accent-green)]",
-  warning: "bg-mission-suspicious",
-  error:   "bg-mission-critical",
-  unknown: "bg-mission-text/20",
+const DOT_TONE: Record<DiagStatus, "success" | "warning" | "danger" | "muted"> = {
+  active: "success",
+  warning: "warning",
+  error: "danger",
+  unknown: "muted",
 };
 
-const TEXT: Record<DiagStatus, string> = {
-  active:  "text-mission-active",
-  warning: "text-mission-suspicious",
-  error:   "text-mission-critical",
-  unknown: "text-mission-text/30",
+const BADGE_TONE: Record<DiagStatus, "success" | "warning" | "danger" | "muted"> = {
+  active: "success",
+  warning: "warning",
+  error: "danger",
+  unknown: "muted",
 };
 
 export default function DiagnosticsMonitor() {
@@ -41,10 +42,10 @@ export default function DiagnosticsMonitor() {
           >
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className={`h-2 w-2 shrink-0 rounded-full ${DOT[status]}`} />
+              <StatusIndicator tone={DOT_TONE[status]} size="md" />
               <Typography as="span" variant="control" className="font-medium uppercase tracking-[0.08em]">{label}</Typography>
             </div>
-            <Typography as="span" variant="monoStrong" className={`uppercase tracking-[0.08em] ${TEXT[status]}`}>{detail}</Typography>
+            <StatusIndicator tone={BADGE_TONE[status]} label={detail} showDot={false} textVariant="monoStrong" className="uppercase tracking-[0.08em]" />
             </div>
           </MissionCard>
         ))}

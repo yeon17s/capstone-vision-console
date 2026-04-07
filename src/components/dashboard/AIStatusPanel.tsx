@@ -1,6 +1,7 @@
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
+import StatusIndicator from "../ui/StatusIndicator";
 
 interface StatusCellProps {
   label: string;
@@ -12,6 +13,12 @@ function getFrameDelayTone(frameDelayMs: number): string {
   if (frameDelayMs <= 60) return "text-mission-active";
   if (frameDelayMs <= 120) return "text-mission-suspicious";
   return "text-mission-critical";
+}
+
+function getFrameDelayBadgeTone(frameDelayMs: number): "success" | "warning" | "danger" {
+  if (frameDelayMs <= 60) return "success";
+  if (frameDelayMs <= 120) return "warning";
+  return "danger";
 }
 
 function StatusCell({ label, value, valueClass = "text-mission-text" }: StatusCellProps) {
@@ -26,6 +33,7 @@ function StatusCell({ label, value, valueClass = "text-mission-text" }: StatusCe
 export default function AIStatusPanel() {
   const frameDelayMs = 48;
   const frameDelayToneClass = getFrameDelayTone(frameDelayMs);
+  const frameDelayBadgeTone = getFrameDelayBadgeTone(frameDelayMs);
 
   return (
     <MissionPanel
@@ -43,7 +51,10 @@ export default function AIStatusPanel() {
         <StatusCell label="Last Detected" value="person" valueClass="text-mission-text" />
 
         {/* Confidence */}
-        <StatusCell label="Confidence" value="98.5%" valueClass="text-mission-active" />
+        <div className="flex min-h-[88px] flex-col items-center justify-center gap-2 px-3 py-3">
+          <Typography variant="overline" className="tracking-[0.14em]">Confidence</Typography>
+          <StatusIndicator tone="success" label="98.5%" showDot={false} textVariant="metric" className="uppercase" />
+        </div>
 
         {/* Current Mode */}
         <StatusCell label="Current Mode" value="Manual" valueClass="text-mission-info" />
@@ -51,8 +62,8 @@ export default function AIStatusPanel() {
         {/* Frame Delay + FPS */}
         <div className="flex min-h-[88px] flex-col items-center justify-center gap-1 px-3 py-3">
           <Typography variant="overline" className="tracking-[0.14em]">Frame Delay</Typography>
-          <Typography variant="metric" className={frameDelayToneClass}>{frameDelayMs}ms</Typography>
-          <Typography variant="monoStrong" className="uppercase tracking-[0.12em]">FPS: 20.5</Typography>
+          <StatusIndicator tone={frameDelayBadgeTone} label={`${frameDelayMs}ms`} showDot={false} textVariant="metric" />
+          <Typography variant="monoStrong" className={`uppercase tracking-[0.12em] ${frameDelayToneClass}`}>FPS: 20.5</Typography>
         </div>
 
         {/* Freeze Frame */}

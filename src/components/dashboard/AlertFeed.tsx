@@ -1,5 +1,7 @@
 import Typography from "../ui/Typography";
 import MissionPanel, { MissionCard } from "../ui/MissionPanel";
+import StatusIndicator from "../ui/StatusIndicator";
+import StatusBadge from "../ui/StatusBadge";
 
 interface AlertItem {
   id: number;
@@ -16,11 +18,6 @@ const MOCK_ALERTS: AlertItem[] = [
   { id: 4, cls: "person", conf: 88.9, timestamp: "2026-03-29 19:21:57", status: "Confirmed" },
 ];
 
-const DOT_COLOR: Record<AlertItem["status"], string> = {
-  Confirmed: "bg-mission-active",
-  Pending:   "bg-mission-suspicious",
-};
-
 const STATUS_STYLE: Record<AlertItem["status"], string> = {
   Confirmed: "text-mission-active",
   Pending:   "text-mission-suspicious",
@@ -31,16 +28,18 @@ export default function AlertFeed() {
     <MissionPanel
       className="flex-1"
       title="Real-Time Alert Feed"
-      headerRight={<span className="h-2 w-2 animate-pulse rounded-full bg-mission-active shadow-mission-glow-green" />}
+      headerRight={<StatusIndicator tone="success" size="md" pulse />}
       bodyClassName="flex-1 space-y-2 overflow-y-auto p-3"
       footer={
         <div className="flex gap-5">
-          <Typography as="span" variant="overline" tone="success" className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-mission-active" />Confirmed
-          </Typography>
-          <Typography as="span" variant="overline" tone="warning" className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-mission-suspicious" />Pending
-          </Typography>
+          <div className="flex items-center gap-2">
+            <StatusIndicator tone="success" />
+            <StatusBadge tone="success" className="border-0 bg-transparent px-0 py-0">Confirmed</StatusBadge>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusIndicator tone="warning" />
+            <StatusBadge tone="warning" className="border-0 bg-transparent px-0 py-0">Pending</StatusBadge>
+          </div>
         </div>
       }
     >
@@ -52,17 +51,18 @@ export default function AlertFeed() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
                   <Typography as="span" variant="monoStrong" className="text-mission-overline font-medium">{a.timestamp}</Typography>
-                  <Typography as="span" variant="display" className={STATUS_STYLE[a.status]}>
-                    {a.conf}%
-                  </Typography>
+                  <StatusIndicator
+                    tone={a.status === "Confirmed" ? "success" : "warning"}
+                    label={`${a.conf}%`}
+                    showDot={false}
+                    textVariant="overline"
+                  />
+
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Typography as="span" variant="emphasis" className="capitalize">{a.cls}</Typography>
-                  <span className={`h-1.5 w-1.5 rounded-full ${DOT_COLOR[a.status]}`} />
-                  <Typography as="span" variant="overline" className={STATUS_STYLE[a.status]}>
-                    {a.status}
-                  </Typography>
+                  <StatusIndicator tone={a.status === "Confirmed" ? "success" : "warning"} />
                 </div>
 
                 <Typography variant="control">Location: X 1.2, Y -0.5</Typography>

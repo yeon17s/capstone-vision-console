@@ -2,6 +2,7 @@ import type { DetectionLogEntry } from "../../store/robotStore";
 import type { RowStatus } from "../../pages/History";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
+import StatusIndicator from "../ui/StatusIndicator";
 
 interface DetectionTableProps {
   entries: DetectionLogEntry[];
@@ -16,10 +17,16 @@ function confColor(conf: number): string {
   return "text-mission-text/60";
 }
 
-const STATUS_STYLE: Record<RowStatus, string> = {
-  Confirmed:    "text-mission-secondary",
-  Pending:      "text-mission-suspicious",
-  FalsePositive: "text-mission-text/40 line-through",
+function confTone(conf: number): "success" | "warning" | "muted" {
+  if (conf >= 0.85) return "success";
+  if (conf >= 0.70) return "warning";
+  return "muted";
+}
+
+const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
+  Confirmed: "success",
+  Pending: "warning",
+  FalsePositive: "muted",
 };
 
 const COLS = ["Timestamp", "Conf (%)", "Class", "Mode", "Status"];
@@ -65,10 +72,26 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                     ].join(" ")}
                   >
                     <td className="px-4 py-2"><Typography as="span" variant="mono" className="text-mission-text/90">{row.timestamp}</Typography></td>
-                    <td className="px-4 py-2"><Typography as="span" variant="monoStrong" className={confColor(row.confidence)}>{(row.confidence * 100).toFixed(1)}%</Typography></td>
+                    <td className="px-4 py-2">
+                      <StatusIndicator
+                        tone={confTone(row.confidence)}
+                        label={(row.confidence * 100).toFixed(1) + "%"}
+                        showDot={false}
+                        textVariant="monoStrong"
+                        className={confColor(row.confidence)}
+                      />
+                    </td>
                     <td className="px-4 py-2"><Typography as="span" variant="control" className="font-medium capitalize">{row.class}</Typography></td>
                     <td className="px-4 py-2"><Typography as="span" variant="mono" tone="info" className="uppercase tracking-[0.08em] text-mission-info/90">{row.mode ?? "RGB"}</Typography></td>
-                    <td className="px-4 py-2"><Typography as="span" variant="overline" className={`font-bold tracking-[0.08em] ${STATUS_STYLE[status]}`}>{status}</Typography></td>
+                    <td className="px-4 py-2">
+                      <StatusIndicator
+                        tone={STATUS_TONE[status]}
+                        label={status}
+                        showDot={false}
+                        textVariant="overline"
+                        className={status === "FalsePositive" ? "line-through" : ""}
+                      />
+                    </td>
                   </tr>
                 );
               })}

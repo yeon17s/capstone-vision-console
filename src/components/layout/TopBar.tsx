@@ -1,5 +1,6 @@
 import Typography from "../ui/Typography";
 import Button from "../ui/Button";
+import StatusIndicator from "../ui/StatusIndicator";
 
 type TabName = "Dashboard" | "History" | "Settings";
 
@@ -16,9 +17,16 @@ function getPingTone(pingMs: number): string {
   return "text-mission-critical";
 }
 
+function getPingBadgeTone(pingMs: number): "success" | "warning" | "danger" {
+  if (pingMs <= 40) return "success";
+  if (pingMs <= 90) return "warning";
+  return "danger";
+}
+
 export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
   const pingMs = 32;
   const pingToneClass = getPingTone(pingMs);
+  const pingBadgeTone = getPingBadgeTone(pingMs);
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-mission-border bg-mission-bg px-6 py-3">
@@ -59,24 +67,21 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
 
         <div className="flex items-center gap-3 rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
           <div className="flex gap-3">
-            <Typography as="span" variant="overline" tone="success" className="flex items-center gap-1.5 tracking-[0.16em]">
-              <span className="h-2 w-2 rounded-full bg-mission-active shadow-mission-glow-green" />
-              ROS
-            </Typography>
-            <Typography as="span" variant="overline" tone="success" className="flex items-center gap-1.5 tracking-[0.16em]">
-              <span className="h-2 w-2 rounded-full bg-mission-active shadow-mission-glow-green" />
-              FastAPI
-            </Typography>
-            <Typography as="span" variant="overline" tone="danger" className="flex items-center gap-1.5 tracking-[0.16em]">
-              <span className="h-2 w-2 rounded-full bg-mission-critical shadow-mission-glow-red" />
-              Camera
-            </Typography>
+            <StatusIndicator tone="success" label="ROS" size="md" className="tracking-[0.16em]" />
+            <StatusIndicator tone="success" label="FastAPI" size="md" className="tracking-[0.16em]" />
+            <StatusIndicator tone="danger" label="Camera" size="md" className="tracking-[0.16em]" />
           </div>
         </div>
 
         <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
           <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">Ping:</Typography>{" "}
-          <Typography as="span" variant="monoStrong" className={pingToneClass}>{pingMs}ms</Typography>
+          <StatusIndicator
+            tone={pingBadgeTone}
+            label={`${pingMs}ms`}
+            showDot={false}
+            textVariant="monoStrong"
+            className={pingToneClass}
+          />
         </div>
 
         <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
