@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-function useRosConnection() {
+function useRosConnection(): void {
   useEffect(() => {
     return () => {};
   }, []);

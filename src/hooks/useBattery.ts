@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-function useAIStream() {
+function useBattery(): void {
   useEffect(() => {
     return () => {};
   }, []);
 }
 
-export default useAIStream;
+export default useBattery;
