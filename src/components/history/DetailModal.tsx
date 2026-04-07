@@ -1,5 +1,8 @@
 import type { DetectionLogEntry } from "../../store/robotStore";
 import type { RowStatus } from "../../pages/History";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
 
 interface DetailModalProps {
   entry: DetectionLogEntry | null;
@@ -17,15 +20,17 @@ interface MetaRowProps {
 function MetaRow({ label, value, mono = false, accent = false }: MetaRowProps) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="min-w-[110px] text-[11px] text-mission-text/40">{label}</span>
-      <span
-        className={[
-          mono ? "font-mono text-[11px]" : "text-xs",
-          accent ? "text-mission-info" : "text-mission-text/80",
-        ].join(" ")}
+      <Typography as="span" variant="overline" tone="subtle" className="min-w-[110px]">
+        {label}
+      </Typography>
+      <Typography
+        as="span"
+        variant={mono ? "mono" : "control"}
+        tone={accent ? "info" : "default"}
+        className={mono ? "text-mission-text/80" : "font-medium text-mission-text/80"}
       >
         {value}
-      </span>
+      </Typography>
     </div>
   );
 }
@@ -50,11 +55,11 @@ function ConfidenceDonut({ conf }: { conf: number }) {
             strokeLinecap="round"
           />
         </svg>
-        <span className="absolute font-mono text-sm font-bold" style={{ color }}>
+        <Typography as="span" variant="emphasis" className="absolute font-mono font-bold" style={{ color }}>
           {pct.toFixed(1)}%
-        </span>
+        </Typography>
       </div>
-      <p className="text-[10px] uppercase tracking-wider text-mission-text/40">Confidence</p>
+      <Typography variant="overline" tone="subtle">Confidence</Typography>
     </div>
   );
 }
@@ -68,9 +73,9 @@ const STATUS_LABEL: Record<RowStatus, { label: string; cls: string }> = {
 export default function DetailModal({ entry, status, onMarkFalsePositive }: DetailModalProps) {
   if (!entry) {
     return (
-      <div className="flex shrink-0 items-center justify-center rounded-xl border border-mission-border bg-mission-panel py-6">
-        <p className="text-xs text-mission-text/30">Select a row to view details</p>
-      </div>
+      <MissionPanel className="shrink-0" bodyClassName="flex items-center justify-center py-6">
+        <Typography variant="control" className="text-mission-text/30">Select a row to view details</Typography>
+      </MissionPanel>
     );
   }
 
@@ -78,28 +83,28 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
   const isFalsePositive = status === "FalsePositive";
 
   return (
-    <div className="shrink-0 rounded-xl border border-mission-border bg-mission-panel">
-      <div className="flex items-center justify-between border-b border-mission-border px-4 py-2">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-          Detail View
-        </p>
+    <MissionPanel
+      className="shrink-0"
+      title="Detail View"
+      headerRight={
         <div className="flex items-center gap-2">
-          <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusCls}`}>
+          <Typography as="span" variant="overline" className={`rounded border px-2 py-0.5 font-bold ${statusCls}`}>
             {statusLabel}
-          </span>
+          </Typography>
           {!isFalsePositive && (
-            <button
-              type="button"
+            <Button
               onClick={onMarkFalsePositive}
-              className="rounded border border-mission-critical/40 bg-mission-critical/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-mission-critical transition-colors hover:bg-mission-critical/15"
+              variant="dangerOutline"
+              size="sm"
+              className="px-2 py-0.5"
             >
-              False Positive
-            </button>
+              <Typography as="span" variant="overline" tone="danger" className="font-bold">False Positive</Typography>
+            </Button>
           )}
         </div>
-      </div>
-
-      <div className="grid grid-cols-[auto_1fr_auto] items-start gap-4 p-4">
+      }
+      bodyClassName="grid grid-cols-[auto_1fr_auto] items-start gap-4 p-4"
+    >
         {/* Confidence donut */}
         <ConfidenceDonut conf={entry.confidence} />
 
@@ -117,25 +122,24 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         <div className="flex gap-2">
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-20 w-24 items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              <p className="text-center text-[10px] text-mission-text/30">
+              <Typography as="p" variant="overline" className="text-center text-mission-text/30">
                 A. Original<br />Photo
-              </p>
+              </Typography>
             </div>
-            <span className="text-[10px] text-mission-text/30">Original</span>
+            <Typography as="span" variant="overline" className="text-mission-text/30">Original</Typography>
           </div>
           <div className="flex flex-col items-center gap-1">
             <div
               className="flex h-20 w-24 items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg"
               style={{ filter: "invert(1) hue-rotate(180deg)" }}
             >
-              <p className="text-center text-[10px]" style={{ filter: "invert(1) hue-rotate(180deg)" }}>
+              <Typography as="p" variant="overline" className="text-center" style={{ filter: "invert(1) hue-rotate(180deg)" }}>
                 B. Inverted<br />Photo
-              </p>
+              </Typography>
             </div>
-            <span className="text-[10px] text-mission-text/30">Inverted</span>
+            <Typography as="span" variant="overline" className="text-mission-text/30">Inverted</Typography>
           </div>
         </div>
-      </div>
-    </div>
+    </MissionPanel>
   );
 }

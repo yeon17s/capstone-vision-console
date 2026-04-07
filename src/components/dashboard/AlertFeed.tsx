@@ -1,3 +1,6 @@
+import Typography from "../ui/Typography";
+import MissionPanel, { MissionCard } from "../ui/MissionPanel";
+
 interface AlertItem {
   id: number;
   cls: string;
@@ -25,57 +28,48 @@ const STATUS_STYLE: Record<AlertItem["status"], string> = {
 
 export default function AlertFeed() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-[18px] border border-mission-border bg-mission-panel shadow-mission-soft">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-mission-border px-5 py-3">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-mission-text">
-          Real-Time Alert Feed
-        </p>
-        <span className="h-2 w-2 animate-pulse rounded-full bg-mission-active shadow-mission-glow-green" />
-      </div>
-
-      {/* Alert cards */}
-      <div className="flex-1 space-y-2 overflow-y-auto p-3">
+    <MissionPanel
+      className="flex-1"
+      title="Real-Time Alert Feed"
+      headerRight={<span className="h-2 w-2 animate-pulse rounded-full bg-mission-active shadow-mission-glow-green" />}
+      bodyClassName="flex-1 space-y-2 overflow-y-auto p-3"
+      footer={
+        <div className="flex gap-5">
+          <Typography as="span" variant="overline" tone="success" className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-mission-active" />Confirmed
+          </Typography>
+          <Typography as="span" variant="overline" tone="warning" className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-mission-suspicious" />Pending
+          </Typography>
+        </div>
+      }
+    >
         {MOCK_ALERTS.map((a) => (
-          <div
-            key={a.id}
-            className="rounded-lg border border-mission-border bg-mission-bg px-4 py-3 transition hover:border-mission-text"
-          >
+          <MissionCard key={a.id}>
             <div className="flex items-start gap-3">
               <div className="h-16 w-16 shrink-0 rounded-md border border-mission-border bg-mission-panel" />
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-[10px] text-mission-text">{a.timestamp}</span>
-                  <span className={`font-mono text-[22px] font-black ${STATUS_STYLE[a.status]}`}>
+                  <Typography as="span" variant="monoStrong" className="text-mission-overline font-medium">{a.timestamp}</Typography>
+                  <Typography as="span" variant="display" className={STATUS_STYLE[a.status]}>
                     {a.conf}%
-                  </span>
+                  </Typography>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold capitalize text-mission-text">{a.cls}</span>
+                  <Typography as="span" variant="emphasis" className="capitalize">{a.cls}</Typography>
                   <span className={`h-1.5 w-1.5 rounded-full ${DOT_COLOR[a.status]}`} />
-                  <span className={`text-[11px] font-semibold uppercase tracking-[0.08em] ${STATUS_STYLE[a.status]}`}>
+                  <Typography as="span" variant="overline" className={STATUS_STYLE[a.status]}>
                     {a.status}
-                  </span>
+                  </Typography>
                 </div>
 
-                <p className="text-[11px] text-mission-text">Location: X 1.2, Y -0.5</p>
+                <Typography variant="control">Location: X 1.2, Y -0.5</Typography>
               </div>
             </div>
-          </div>
+          </MissionCard>
         ))}
-      </div>
-
-      {/* Legend */}
-      <div className="flex gap-5 border-t border-mission-border px-4 py-2">
-        <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] text-mission-active">
-          <span className="h-1.5 w-1.5 rounded-full bg-mission-active" />Confirmed
-        </span>
-        <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] text-mission-suspicious">
-          <span className="h-1.5 w-1.5 rounded-full bg-mission-suspicious" />Pending
-        </span>
-      </div>
-    </div>
+    </MissionPanel>
   );
 }

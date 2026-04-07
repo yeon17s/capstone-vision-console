@@ -1,4 +1,7 @@
 import useSettingsStore from "../../store/settingsStore";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
 
 export default function AIConfig() {
   const { confidenceThreshold, audioAlarmEnabled, volume, updateSettings } =
@@ -7,23 +10,19 @@ export default function AIConfig() {
   const thresholdPct = Math.round(confidenceThreshold * 100);
 
   return (
-    <section className="rounded border border-mission-border bg-mission-panel p-4">
-      <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-        AI &amp; Sensor Configuration
-      </p>
-
+    <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4">
       {/* Confidence Threshold */}
       <div className="mb-5">
         <div className="mb-1 flex items-center justify-between">
-          <label className="text-xs font-semibold text-mission-text">
+          <Typography as="label" variant="overline" className="font-bold text-mission-text/90">
             Confidence Threshold
-          </label>
-          <span className="font-mono text-xs font-semibold text-mission-info">
+          </Typography>
+          <Typography as="span" variant="monoStrong" tone="info">
             {thresholdPct}%
-          </span>
+          </Typography>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-mission-text/30">0</span>
+          <Typography as="span" variant="overline" className="text-mission-text/30">0</Typography>
           <input
             type="range"
             min={0}
@@ -34,54 +33,52 @@ export default function AIConfig() {
             }
             className="h-1.5 flex-1 cursor-pointer accent-[var(--color-accent-blue)]"
           />
-          <span className="text-[10px] text-mission-text/30">100</span>
+          <Typography as="span" variant="overline" className="text-mission-text/30">100</Typography>
         </div>
-        <p className="mt-1 text-[10px] text-mission-text/40">
+        <Typography variant="overline" tone="subtle" className="mt-1 tracking-[0.08em] text-mission-text/40">
           Current threshold: {thresholdPct}%
-        </p>
+        </Typography>
       </div>
 
       {/* Audio Alarm */}
       <div className="mb-4">
-        <p className="mb-2 text-xs font-semibold text-mission-text">Audio Alarm</p>
+        <Typography variant="overline" className="mb-2 font-bold text-mission-text/90">Audio Alarm</Typography>
         <div className="flex w-fit overflow-hidden rounded border border-mission-border">
-          <button
-            type="button"
+          <Button
             onClick={() => updateSettings({ audioAlarmEnabled: true })}
-            className={`border-r border-mission-border px-5 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-              audioAlarmEnabled
-                ? "bg-mission-active/15 text-mission-active"
-                : "text-mission-text/30 hover:text-mission-text/60"
-            }`}
+            variant="segment"
+            size="md"
+            active={audioAlarmEnabled}
+            className="rounded-none border-0 border-r border-mission-border px-5 py-1.5"
           >
-            On
-          </button>
-          <button
-            type="button"
+            <Typography as="span" variant="controlStrong" tone={audioAlarmEnabled ? "success" : "muted"}>On</Typography>
+          </Button>
+          <Button
             onClick={() => updateSettings({ audioAlarmEnabled: false })}
-            className={`px-5 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-              !audioAlarmEnabled
-                ? "bg-mission-critical/10 text-mission-critical"
-                : "text-mission-text/30 hover:text-mission-text/60"
-            }`}
+            variant="segment"
+            size="md"
+            active={!audioAlarmEnabled}
+            className={`rounded-none border-0 px-5 py-1.5 ${!audioAlarmEnabled ? "bg-mission-critical/10 text-mission-critical hover:bg-mission-critical/15 hover:text-mission-critical" : ""}`}
           >
-            Off
-          </button>
+            <Typography as="span" variant="controlStrong" tone={!audioAlarmEnabled ? "danger" : "muted"}>Off</Typography>
+          </Button>
         </div>
       </div>
 
       {/* Volume */}
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-semibold text-mission-text">Volume</p>
-          <span
-            className={`font-mono text-xs ${audioAlarmEnabled ? "text-mission-text/60" : "text-mission-text/20"}`}
+          <Typography variant="overline" className="font-bold text-mission-text/90">Volume</Typography>
+          <Typography
+            as="span"
+            variant="monoStrong"
+            className={audioAlarmEnabled ? "text-mission-text/60" : "text-mission-text/20"}
           >
             {volume}%
-          </span>
+          </Typography>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-mission-text/30">0</span>
+          <Typography as="span" variant="overline" className="text-mission-text/30">0</Typography>
           <input
             type="range"
             min={0}
@@ -91,9 +88,9 @@ export default function AIConfig() {
             onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
             className="h-1.5 flex-1 cursor-pointer accent-[var(--color-accent-blue)] disabled:cursor-not-allowed disabled:opacity-30"
           />
-          <span className="text-[10px] text-mission-text/30">100</span>
+          <Typography as="span" variant="overline" className="text-mission-text/30">100</Typography>
         </div>
       </div>
-    </section>
+    </MissionPanel>
   );
 }

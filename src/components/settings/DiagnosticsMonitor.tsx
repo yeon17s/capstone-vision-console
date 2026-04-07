@@ -1,3 +1,6 @@
+import Typography from "../ui/Typography";
+import MissionPanel, { MissionCard } from "../ui/MissionPanel";
+
 type DiagStatus = "active" | "warning" | "error" | "unknown";
 
 interface DiagItem {
@@ -30,25 +33,21 @@ const TEXT: Record<DiagStatus, string> = {
 
 export default function DiagnosticsMonitor() {
   return (
-    <section className="rounded border border-mission-border bg-mission-panel p-4">
-      <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-        Diagnostics Monitor
-      </p>
-
-      <div className="space-y-1.5">
+    <MissionPanel title="Diagnostics Monitor" bodyClassName="space-y-1.5 p-4">
         {DIAG_ITEMS.map(({ label, detail, status }) => (
-          <div
+          <MissionCard
             key={label}
-            className="flex items-center justify-between rounded border border-mission-border/50 bg-mission-bg/60 px-3 py-2"
+            className="bg-mission-panel/10 px-3 py-2"
           >
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className={`h-2 w-2 shrink-0 rounded-full ${DOT[status]}`} />
-              <span className="text-xs text-mission-text">{label}</span>
+              <Typography as="span" variant="control" className="font-medium uppercase tracking-[0.08em]">{label}</Typography>
             </div>
-            <span className={`font-mono text-[11px] ${TEXT[status]}`}>{detail}</span>
-          </div>
+            <Typography as="span" variant="monoStrong" className={`uppercase tracking-[0.08em] ${TEXT[status]}`}>{detail}</Typography>
+            </div>
+          </MissionCard>
         ))}
-      </div>
-    </section>
+    </MissionPanel>
   );
 }

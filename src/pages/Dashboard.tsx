@@ -7,6 +7,7 @@ import DriveController from "../components/dashboard/DriveController";
 import EStopButton from "../components/dashboard/EStopButton";
 import PanTiltController from "../components/dashboard/PanTiltController";
 import VideoStream from "../components/dashboard/VideoStream";
+import Typography from "../components/ui/Typography";
 
 export default function Dashboard() {
   return (
@@ -32,9 +33,9 @@ export default function Dashboard() {
       <aside className="flex min-h-0 flex-col overflow-hidden bg-mission-bg">
         {/* Panel header */}
         <div className="border-b border-mission-border bg-mission-panel px-5 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-mission-text">
+          <Typography variant="panelTitle" className="tracking-[0.28em]">
             Control Panel
-          </p>
+          </Typography>
         </div>
 
         {/* Scrollable controls */}

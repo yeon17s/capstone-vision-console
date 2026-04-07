@@ -1,14 +1,10 @@
-const ARROW_BTN =
-  "flex items-center justify-center rounded-lg border border-mission-border bg-mission-bg text-base text-mission-text transition hover:border-mission-text hover:bg-mission-panel hover:text-mission-text active:scale-90";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
 
 export default function DriveController() {
   return (
-    <div className="rounded-[18px] border border-mission-border bg-mission-panel shadow-mission-soft">
-      <div className="px-5 py-4">
-        <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.22em] text-mission-text">
-          Robot Drive
-        </p>
-
+    <MissionPanel title="Robot Drive" bodyClassName="px-5 py-4">
         {/* D-pad + joystick */}
         <div className="flex items-center justify-center">
           <div className="relative h-40 w-40">
@@ -21,16 +17,15 @@ export default function DriveController() {
             </div>
 
             {/* Up */}
-            <button type="button" className={`absolute left-1/2 top-0 h-10 w-10 -translate-x-1/2 ${ARROW_BTN}`}>↑</button>
+            <Button variant="icon" size="icon" className="absolute left-1/2 top-0 -translate-x-1/2"><Typography as="span" variant="metric">↑</Typography></Button>
             {/* Down */}
-            <button type="button" className={`absolute bottom-0 left-1/2 h-10 w-10 -translate-x-1/2 ${ARROW_BTN}`}>↓</button>
+            <Button variant="icon" size="icon" className="absolute bottom-0 left-1/2 -translate-x-1/2"><Typography as="span" variant="metric">↓</Typography></Button>
             {/* Left */}
-            <button type="button" className={`absolute left-0 top-1/2 h-10 w-10 -translate-y-1/2 ${ARROW_BTN}`}>←</button>
+            <Button variant="icon" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2"><Typography as="span" variant="metric">←</Typography></Button>
             {/* Right */}
-            <button type="button" className={`absolute right-0 top-1/2 h-10 w-10 -translate-y-1/2 ${ARROW_BTN}`}>→</button>
+            <Button variant="icon" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2"><Typography as="span" variant="metric">→</Typography></Button>
           </div>
         </div>
-      </div>
-    </div>
+    </MissionPanel>
   );
 }

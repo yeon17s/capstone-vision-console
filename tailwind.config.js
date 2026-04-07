@@ -19,6 +19,14 @@ export default {
           suspicious: "var(--color-accent-yellow)",
         },
       },
+      fontSize: {
+        "mission-overline": ["var(--font-size-mission-overline)", { lineHeight: "1rem" }],
+        "mission-label": ["var(--font-size-mission-label)", { lineHeight: "1rem" }],
+        "mission-control": ["var(--font-size-mission-control)", { lineHeight: "1.125rem" }],
+        "mission-emphasis": ["var(--font-size-mission-emphasis)", { lineHeight: "1.25rem" }],
+        "mission-metric": ["var(--font-size-mission-metric)", { lineHeight: "1.25rem" }],
+        "mission-display": ["var(--font-size-mission-display)", { lineHeight: "1.75rem" }],
+      },
       boxShadow: {
         "mission-soft": "0 0 0 1px rgb(69 73 78 / 0.9), 0 10px 30px rgb(0 0 0 / 0.25)",
         "mission-glow-green": "0 0 18px rgb(129 199 132 / 0.35)",

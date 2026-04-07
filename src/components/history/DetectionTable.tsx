@@ -1,5 +1,7 @@
 import type { DetectionLogEntry } from "../../store/robotStore";
 import type { RowStatus } from "../../pages/History";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
 
 interface DetectionTableProps {
   entries: DetectionLogEntry[];
@@ -24,29 +26,27 @@ const COLS = ["Timestamp", "Conf (%)", "Class", "Mode", "Status"];
 
 export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect }: DetectionTableProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-mission-border bg-mission-panel">
-      <div className="flex items-center justify-between border-b border-mission-border px-4 py-2">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-          Detection Log
-        </p>
-        <span className="font-mono text-[11px] text-mission-text/30">{entries.length} records</span>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
+    <MissionPanel
+      className="flex-1"
+      title="Detection Log"
+      headerRight={<Typography as="span" variant="monoStrong" className="text-mission-text/40">{entries.length} records</Typography>}
+      bodyClassName="min-h-0 flex-1 overflow-y-auto p-0"
+      compactBody
+    >
         {entries.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-xs text-mission-text/30">No records match current filters</p>
+            <Typography variant="control" className="text-mission-text/30">No records match current filters</Typography>
           </div>
         ) : (
-          <table className="w-full text-xs">
+          <table className="w-full text-mission-control">
             <thead className="sticky top-0 bg-mission-panel">
               <tr className="border-b border-mission-border">
                 {COLS.map((col) => (
                   <th
                     key={col}
-                    className="px-4 py-2 text-left font-semibold uppercase tracking-wider text-mission-text/40"
+                    className="px-4 py-2 text-left"
                   >
-                    {col}
+                    <Typography as="span" variant="overline" tone="subtle" className="font-bold tracking-[0.14em]">{col}</Typography>
                   </th>
                 ))}
               </tr>
@@ -64,20 +64,17 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                       isSelected ? "bg-mission-info/5 ring-1 ring-inset ring-mission-info/50" : "",
                     ].join(" ")}
                   >
-                    <td className="px-4 py-2 font-mono text-mission-text/80">{row.timestamp}</td>
-                    <td className={`px-4 py-2 font-mono font-semibold ${confColor(row.confidence)}`}>
-                      {(row.confidence * 100).toFixed(1)}%
-                    </td>
-                    <td className="px-4 py-2 capitalize text-mission-text">{row.class}</td>
-                    <td className="px-4 py-2 text-mission-info/80">{row.mode ?? "RGB"}</td>
-                    <td className={`px-4 py-2 font-semibold ${STATUS_STYLE[status]}`}>{status}</td>
+                    <td className="px-4 py-2"><Typography as="span" variant="mono" className="text-mission-text/90">{row.timestamp}</Typography></td>
+                    <td className="px-4 py-2"><Typography as="span" variant="monoStrong" className={confColor(row.confidence)}>{(row.confidence * 100).toFixed(1)}%</Typography></td>
+                    <td className="px-4 py-2"><Typography as="span" variant="control" className="font-medium capitalize">{row.class}</Typography></td>
+                    <td className="px-4 py-2"><Typography as="span" variant="mono" tone="info" className="uppercase tracking-[0.08em] text-mission-info/90">{row.mode ?? "RGB"}</Typography></td>
+                    <td className="px-4 py-2"><Typography as="span" variant="overline" className={`font-bold tracking-[0.08em] ${STATUS_STYLE[status]}`}>{status}</Typography></td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         )}
-      </div>
-    </div>
+    </MissionPanel>
   );
 }

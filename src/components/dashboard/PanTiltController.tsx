@@ -1,3 +1,7 @@
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
+
 type Direction = "up" | "left" | "center" | "right" | "down";
 
 interface DPadButton {
@@ -17,27 +21,26 @@ const DPAD_BUTTONS: DPadButton[] = [
 
 export default function PanTiltController() {
   return (
-    <div className="rounded-[18px] border border-mission-border bg-mission-panel px-5 py-4 shadow-mission-soft">
-      <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.22em] text-mission-text">
-        Camera Pan / Tilt
-      </p>
+    <MissionPanel title="Camera Pan / Tilt" bodyClassName="px-5 py-4">
       <div className="flex items-center justify-center">
         <div className="grid grid-cols-3 grid-rows-3 gap-1.5">
           {DPAD_BUTTONS.map(({ label, pos, dir, isCenter }) => (
-            <button
+            <Button
               key={dir}
-              type="button"
-              className={`${pos} flex h-11 w-11 items-center justify-center rounded-lg text-base font-bold transition active:scale-90 ${
+              variant={isCenter ? "iconMuted" : "icon"}
+              size="icon"
+              className={`${pos} ${
                 isCenter
-                  ? "cursor-default border border-mission-border bg-mission-panel text-mission-text"
-                  : "border border-mission-border bg-mission-bg text-mission-text hover:border-mission-text hover:bg-mission-panel hover:text-mission-text"
+                  ? "cursor-default"
+                  : ""
               }`}
+              disabled={isCenter}
             >
-              {label}
-            </button>
+              <Typography as="span" variant="metric">{label}</Typography>
+            </Button>
           ))}
         </div>
       </div>
-    </div>
+    </MissionPanel>
   );
 }

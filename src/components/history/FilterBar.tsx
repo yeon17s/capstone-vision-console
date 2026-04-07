@@ -1,4 +1,7 @@
 import type { Filters } from "../../pages/History";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
 
 interface FilterBarProps {
   filters: Filters;
@@ -13,18 +16,14 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
   }
 
   const inputCls =
-    "w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 text-xs text-mission-text placeholder-mission-text/30 focus:border-mission-info focus:outline-none";
+    "w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text placeholder-mission-text/30 focus:border-mission-info focus:outline-none";
   const smallInputCls =
-    "flex-1 rounded border border-mission-border bg-mission-bg px-2 py-1 text-[11px] text-mission-text placeholder-mission-text/30 focus:border-mission-info focus:outline-none";
+    "flex-1 rounded border border-mission-border bg-mission-bg px-2 py-1 font-mono text-mission-label text-mission-text placeholder-mission-text/30 focus:border-mission-info focus:outline-none";
 
   return (
     <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
       {/* Search & Filter */}
-      <div className="rounded-xl border border-mission-border bg-mission-panel p-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-          Search &amp; Filter
-        </p>
-
+      <MissionPanel title="Search & Filter" bodyClassName="p-4">
         <input
           type="text"
           placeholder="Search class, timestamp..."
@@ -34,7 +33,7 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
         />
 
         <div className="mb-3">
-          <p className="mb-1 text-[11px] text-mission-text/40">Date Range</p>
+          <Typography variant="overline" tone="subtle" className="mb-1">Date Range</Typography>
           <div className="flex items-center gap-1">
             <input
               type="text"
@@ -43,7 +42,7 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
               onChange={(e) => set("dateFrom", e.target.value)}
               className={smallInputCls}
             />
-            <span className="text-[11px] text-mission-text/30">to</span>
+            <Typography as="span" variant="overline" tone="subtle" className="tracking-[0.08em] text-mission-text/30">to</Typography>
             <input
               type="text"
               placeholder="YYYY-MM-DD"
@@ -56,11 +55,11 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
 
         <div className="mb-3">
           <div className="mb-1 flex items-center justify-between">
-            <p className="text-[11px] text-mission-text/40">Confidence Min</p>
-            <span className="font-mono text-[11px] text-mission-info">{filters.confMin}%</span>
+            <Typography variant="overline" tone="subtle">Confidence Min</Typography>
+            <Typography as="span" variant="monoStrong" tone="info">{filters.confMin}%</Typography>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-mission-text/30">0%</span>
+            <Typography as="span" variant="overline" className="text-mission-text/30">0%</Typography>
             <input
               type="range"
               min={0}
@@ -69,16 +68,16 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
               onChange={(e) => set("confMin", Number(e.target.value))}
               className="h-1 flex-1 cursor-pointer accent-mission-info"
             />
-            <span className="text-[10px] text-mission-text/30">100%</span>
+            <Typography as="span" variant="overline" className="text-mission-text/30">100%</Typography>
           </div>
         </div>
 
         <div className="mb-3">
-          <p className="mb-1 text-[11px] text-mission-text/40">Class</p>
+          <Typography variant="overline" tone="subtle" className="mb-1">Class</Typography>
           <select
             value={filters.cls}
             onChange={(e) => set("cls", e.target.value)}
-            className="w-full rounded border border-mission-border bg-mission-bg px-2 py-1.5 text-xs text-mission-text focus:border-mission-info focus:outline-none"
+            className="w-full rounded border border-mission-border bg-mission-bg px-2 py-1.5 text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           >
             <option value="">All Classes</option>
             <option value="person">Person</option>
@@ -87,7 +86,7 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
         </div>
 
         <div className="mb-4">
-          <p className="mb-1 text-[11px] text-mission-text/40">Operator</p>
+          <Typography variant="overline" tone="subtle" className="mb-1">Operator</Typography>
           <input
             type="text"
             placeholder="Text search"
@@ -97,20 +96,13 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
           />
         </div>
 
-        <button
-          type="button"
-          onClick={onApply}
-          className="w-full rounded border border-mission-info bg-mission-info/10 py-1.5 text-xs font-semibold text-mission-info transition-colors hover:bg-mission-info/20"
-        >
-          Apply Filter
-        </button>
-      </div>
+        <Button onClick={onApply} variant="infoOutline" size="md" className="w-full py-1.5">
+          <Typography as="span" variant="controlStrong" tone="info">Apply Filter</Typography>
+        </Button>
+      </MissionPanel>
 
       {/* Historical Detection Trend */}
-      <div className="flex-1 rounded-xl border border-mission-border bg-mission-panel p-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-          Historical Detection Trend
-        </p>
+      <MissionPanel title="Historical Detection Trend" className="flex-1" bodyClassName="flex h-full flex-col p-4">
         <div className="flex h-32 items-end gap-px rounded border border-mission-border bg-mission-bg px-2 pb-1">
           {trendHeights.map((h, i) => (
             <div
@@ -120,11 +112,11 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
             />
           ))}
         </div>
-        <div className="mt-1 flex justify-between text-[10px] text-mission-text/30">
-          <span>older</span>
-          <span>recent</span>
+        <div className="mt-1 flex justify-between">
+          <Typography as="span" variant="overline" className="text-mission-text/30">older</Typography>
+          <Typography as="span" variant="overline" className="text-mission-text/30">recent</Typography>
         </div>
-      </div>
+      </MissionPanel>
     </aside>
   );
 }

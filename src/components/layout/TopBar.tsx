@@ -1,3 +1,6 @@
+import Typography from "../ui/Typography";
+import Button from "../ui/Button";
+
 type TabName = "Dashboard" | "History" | "Settings";
 
 const TABS: TabName[] = ["Dashboard", "History", "Settings"];
@@ -21,64 +24,64 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
     <header className="flex shrink-0 items-center justify-between border-b border-mission-border bg-mission-bg px-6 py-3">
       {/* Branding */}
       <div className="flex min-w-[200px] items-center gap-3">
-        <span className="text-[13px] font-black uppercase tracking-[0.28em] text-mission-text">
+        <Typography as="span" variant="brand">
           RCOD
-        </span>
+        </Typography>
         <span className="text-mission-border">|</span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.32em] text-mission-text">
+        <Typography as="span" variant="overline" className="tracking-[0.32em]">
           Mission Console
-        </span>
+        </Typography>
       </div>
 
       {/* Tab Navigation — centered */}
       <nav className="flex gap-3">
         {TABS.map((tab) => (
-          <button
+          <Button
             key={tab}
-            type="button"
             onClick={() => onTabChange(tab)}
-            className={`min-w-[152px] rounded-lg border px-6 py-2.5 text-[12px] font-bold uppercase tracking-[0.22em] transition ${
-              activeTab === tab
-                ? "border-mission-info bg-mission-info text-mission-bg shadow-mission-glow-blue"
-                : "border-mission-border bg-mission-panel text-mission-text hover:border-mission-text hover:bg-mission-panel hover:text-mission-text"
-            }`}
+            variant="nav"
+            size="lg"
+            active={activeTab === tab}
+            className="min-w-[152px]"
           >
-            {tab}
-          </button>
+            <Typography as="span" variant="controlStrong" className={activeTab === tab ? "text-mission-bg" : ""}>
+              {tab}
+            </Typography>
+          </Button>
         ))}
       </nav>
 
       {/* Status Widgets */}
       <div className="flex min-w-[700px] items-center justify-end gap-3">
-        <div className="rounded-lg border border-mission-border bg-mission-panel px-3 py-2 text-[11px] text-mission-text">
-          ○
+        <div className="rounded-lg border border-mission-border bg-mission-panel px-3 py-2">
+          <Typography as="span" variant="monoStrong">○</Typography>
         </div>
 
-        <div className="flex items-center gap-3 rounded-lg border border-mission-border bg-mission-panel px-4 py-2 text-[11px]">
+        <div className="flex items-center gap-3 rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
           <div className="flex gap-3">
-            <span className="flex items-center gap-1.5 uppercase tracking-[0.16em] text-mission-active">
+            <Typography as="span" variant="overline" tone="success" className="flex items-center gap-1.5 tracking-[0.16em]">
               <span className="h-2 w-2 rounded-full bg-mission-active shadow-mission-glow-green" />
               ROS
-            </span>
-            <span className="flex items-center gap-1.5 uppercase tracking-[0.16em] text-mission-active">
+            </Typography>
+            <Typography as="span" variant="overline" tone="success" className="flex items-center gap-1.5 tracking-[0.16em]">
               <span className="h-2 w-2 rounded-full bg-mission-active shadow-mission-glow-green" />
               FastAPI
-            </span>
-            <span className="flex items-center gap-1.5 uppercase tracking-[0.16em] text-mission-critical">
+            </Typography>
+            <Typography as="span" variant="overline" tone="danger" className="flex items-center gap-1.5 tracking-[0.16em]">
               <span className="h-2 w-2 rounded-full bg-mission-critical shadow-mission-glow-red" />
               Camera
-            </span>
+            </Typography>
           </div>
         </div>
 
-        <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2 text-[12px]">
-          <span className="uppercase tracking-[0.18em] text-mission-text">Ping:</span>{" "}
-          <span className={`font-mono font-bold ${pingToneClass}`}>{pingMs}ms</span>
+        <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
+          <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">Ping:</Typography>{" "}
+          <Typography as="span" variant="monoStrong" className={pingToneClass}>{pingMs}ms</Typography>
         </div>
 
-        <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2 text-[12px]">
-          <span className="uppercase tracking-[0.18em] text-mission-text">Battery:</span>{" "}
-          <span className="font-mono font-bold text-mission-active">85%</span>
+        <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
+          <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">Battery:</Typography>{" "}
+          <Typography as="span" variant="monoStrong" tone="success">85%</Typography>
         </div>
       </div>
     </header>

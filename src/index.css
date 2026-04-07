@@ -22,6 +22,12 @@
   --alpha-soft-fill: 0.2;
   --alpha-hover-fill: 0.3;
   --alpha-alert-glow: 0.5;
+  --font-size-mission-overline: 10px;
+  --font-size-mission-label: 11px;
+  --font-size-mission-control: 12px;
+  --font-size-mission-emphasis: 13px;
+  --font-size-mission-metric: 15px;
+  --font-size-mission-display: 22px;
 
   font-family: "Pretendard", "Noto Sans KR", sans-serif;
   color: var(--color-text-main);
@@ -38,6 +44,8 @@ body {
   min-height: 100vh;
   background: var(--color-bg-main);
   color: var(--color-text-main);
+  font-size: var(--font-size-mission-control);
+  line-height: 1.5;
 }
 
 * {

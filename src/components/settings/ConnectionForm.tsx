@@ -1,5 +1,8 @@
 import { useState } from "react";
 import useSettingsStore from "../../store/settingsStore";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
 
 export default function ConnectionForm() {
   const { jetsonIp, rosbridgePort, fastapiUrl, updateSettings } = useSettingsStore();
@@ -23,60 +26,55 @@ export default function ConnectionForm() {
   }
 
   return (
-    <section className="rounded border border-mission-border bg-mission-panel p-4">
-      <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-        System &amp; Network Configuration
-      </p>
-
+    <MissionPanel title="System & Network Configuration" bodyClassName="p-4">
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-mission-text/40">
+          <Typography as="label" variant="overline" tone="subtle" className="mb-1 block font-bold tracking-[0.14em]">
             Robot IP
-          </label>
+          </Typography>
           <input
             type="text"
             value={draft.jetsonIp}
             onChange={(e) => setDraft((d) => ({ ...d, jetsonIp: e.target.value }))}
-            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-xs text-mission-text focus:border-mission-info focus:outline-none"
+            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-mission-text/40">
+          <Typography as="label" variant="overline" tone="subtle" className="mb-1 block font-bold tracking-[0.14em]">
             Rosbridge Port
-          </label>
+          </Typography>
           <input
             type="text"
             value={draft.rosbridgePort}
             onChange={(e) => setDraft((d) => ({ ...d, rosbridgePort: e.target.value }))}
-            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-xs text-mission-text focus:border-mission-info focus:outline-none"
+            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-mission-text/40">
+          <Typography as="label" variant="overline" tone="subtle" className="mb-1 block font-bold tracking-[0.14em]">
             Backend URL
-          </label>
+          </Typography>
           <input
             type="text"
             value={draft.fastapiUrl}
             onChange={(e) => setDraft((d) => ({ ...d, fastapiUrl: e.target.value }))}
-            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-xs text-mission-text focus:border-mission-info focus:outline-none"
+            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           />
         </div>
 
-        <button
-          type="button"
+        <Button
           onClick={handleSave}
-          className={`mt-1 w-full rounded border py-2 text-xs font-bold uppercase tracking-wider transition ${
-            saved
-              ? "border-mission-active/50 bg-mission-active/10 text-mission-active"
-              : "border-mission-info/40 bg-mission-info/10 text-mission-info hover:bg-mission-info/20"
-          }`}
+          variant="infoOutline"
+          size="md"
+          className={`mt-1 w-full ${saved ? "border-mission-active/50 bg-mission-active/10 text-mission-active hover:bg-mission-active/15" : ""}`}
         >
-          {saved ? "Saved" : "Save & Apply"}
-        </button>
+          <Typography as="span" variant="controlStrong" tone={saved ? "success" : "info"}>
+            {saved ? "Saved" : "Save & Apply"}
+          </Typography>
+        </Button>
       </div>
-    </section>
+    </MissionPanel>
   );
 }

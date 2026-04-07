@@ -1,4 +1,7 @@
 import useSettingsStore from "../../store/settingsStore";
+import Typography from "../ui/Typography";
+import MissionPanel from "../ui/MissionPanel";
+import Button from "../ui/Button";
 
 const POLICIES = [
   { value: "original",          label: "Original Only" },
@@ -9,19 +12,15 @@ export default function StorageSettings() {
   const { storagePolicy, updateSettings } = useSettingsStore();
 
   return (
-    <section className="rounded border border-mission-border bg-mission-panel p-4">
-      <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-mission-text/50">
-        Data &amp; Storage Handling
-      </p>
-
+    <MissionPanel title="Data & Storage Handling" bodyClassName="p-4">
       {/* Storage Policy */}
       <div className="mb-4">
-        <p className="mb-2 text-xs font-semibold text-mission-text">Storage Policy</p>
+        <Typography variant="overline" className="mb-2 font-bold text-mission-text/90">Storage Policy</Typography>
         <div className="flex flex-col gap-1.5">
           {POLICIES.map(({ value, label }) => (
             <label
               key={value}
-              className="flex cursor-pointer items-center gap-2 text-xs text-mission-text"
+              className="flex cursor-pointer items-center gap-2 text-mission-control font-medium text-mission-text"
             >
               <input
                 type="radio"
@@ -38,30 +37,24 @@ export default function StorageSettings() {
 
       {/* Local Storage Path */}
       <div className="mb-4">
-        <p className="mb-1 text-xs font-semibold text-mission-text">Local Storage Path</p>
-        <div className="rounded border border-mission-border bg-mission-bg px-3 py-2 font-mono text-[11px] text-mission-text/40">
-          /data/robot_logs/
+        <Typography variant="overline" className="mb-1 font-bold text-mission-text/90">Local Storage Path</Typography>
+        <div className="rounded border border-mission-border bg-mission-bg px-3 py-2">
+          <Typography variant="monoStrong" className="text-mission-text/55">/data/robot_logs/</Typography>
         </div>
       </div>
 
       {/* Cleanup Actions */}
       <div>
-        <p className="mb-2 text-xs font-semibold text-mission-text">Local Cleanup</p>
+        <Typography variant="overline" className="mb-2 font-bold text-mission-text/90">Local Cleanup</Typography>
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            className="w-full rounded border border-mission-suspicious/30 bg-mission-suspicious/10 py-2 text-xs font-semibold text-mission-suspicious transition hover:bg-mission-suspicious/20"
-          >
-            Clear Local Cache (720 MB)
-          </button>
-          <button
-            type="button"
-            className="w-full rounded border border-mission-critical/30 bg-mission-critical/10 py-2 text-xs font-semibold text-mission-critical transition hover:bg-mission-critical/20"
-          >
-            Delete Old Logs (&gt; 30 Days)
-          </button>
+          <Button variant="warningOutline" size="md" className="w-full">
+            <Typography as="span" variant="controlStrong" tone="warning" className="normal-case tracking-normal">Clear Local Cache (720 MB)</Typography>
+          </Button>
+          <Button variant="dangerOutline" size="md" className="w-full">
+            <Typography as="span" variant="controlStrong" tone="danger" className="normal-case tracking-normal">Delete Old Logs (&gt; 30 Days)</Typography>
+          </Button>
         </div>
       </div>
-    </section>
+    </MissionPanel>
   );
 }
