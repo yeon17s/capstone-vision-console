@@ -2,6 +2,10 @@ import type { Filters } from "../../pages/History";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
+import Field from "../ui/Field";
+import TextInput from "../ui/TextInput";
+import SelectInput from "../ui/SelectInput";
+import RangeField from "../ui/RangeField";
 
 interface FilterBarProps {
   filters: Filters;
@@ -15,86 +19,67 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
     onChange({ ...filters, [key]: value });
   }
 
-  const inputCls =
-    "w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text placeholder-mission-text/30 focus:border-mission-info focus:outline-none";
-  const smallInputCls =
-    "flex-1 rounded border border-mission-border bg-mission-bg px-2 py-1 font-mono text-mission-label text-mission-text placeholder-mission-text/30 focus:border-mission-info focus:outline-none";
-
   return (
     <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
       {/* Search & Filter */}
       <MissionPanel title="Search & Filter" bodyClassName="p-4">
-        <input
-          type="text"
+        <TextInput
           placeholder="Search class, timestamp..."
           value={filters.search}
           onChange={(e) => set("search", e.target.value)}
-          className={`${inputCls} mb-3`}
+          className="mb-3"
         />
 
-        <div className="mb-3">
-          <Typography variant="overline" tone="subtle" className="mb-1">Date Range</Typography>
+        <Field label="Date Range" className="mb-3">
           <div className="flex items-center gap-1">
-            <input
-              type="text"
+            <TextInput
               placeholder="YYYY-MM-DD"
               value={filters.dateFrom}
               onChange={(e) => set("dateFrom", e.target.value)}
-              className={smallInputCls}
+              dense
+              className="flex-1"
             />
             <Typography as="span" variant="overline" tone="subtle" className="tracking-[0.08em] text-mission-text/30">to</Typography>
-            <input
-              type="text"
+            <TextInput
               placeholder="YYYY-MM-DD"
               value={filters.dateTo}
               onChange={(e) => set("dateTo", e.target.value)}
-              className={smallInputCls}
+              dense
+              className="flex-1"
             />
           </div>
-        </div>
+        </Field>
 
-        <div className="mb-3">
-          <div className="mb-1 flex items-center justify-between">
-            <Typography variant="overline" tone="subtle">Confidence Min</Typography>
-            <Typography as="span" variant="monoStrong" tone="info">{filters.confMin}%</Typography>
-          </div>
-          <div className="flex items-center gap-2">
-            <Typography as="span" variant="overline" className="text-mission-text/30">0%</Typography>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={filters.confMin}
-              onChange={(e) => set("confMin", Number(e.target.value))}
-              className="h-1 flex-1 cursor-pointer accent-mission-info"
-            />
-            <Typography as="span" variant="overline" className="text-mission-text/30">100%</Typography>
-          </div>
-        </div>
+        <RangeField
+          className="mb-3"
+          label="Confidence Min"
+          value={filters.confMin}
+          valueLabel={`${filters.confMin}%`}
+          min={0}
+          max={100}
+          minLabel="0%"
+          maxLabel="100%"
+          onChange={(e) => set("confMin", Number(e.target.value))}
+        />
 
-        <div className="mb-3">
-          <Typography variant="overline" tone="subtle" className="mb-1">Class</Typography>
-          <select
+        <Field label="Class" className="mb-3">
+          <SelectInput
             value={filters.cls}
             onChange={(e) => set("cls", e.target.value)}
-            className="w-full rounded border border-mission-border bg-mission-bg px-2 py-1.5 text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           >
             <option value="">All Classes</option>
             <option value="person">Person</option>
             <option value="none">None</option>
-          </select>
-        </div>
+          </SelectInput>
+        </Field>
 
-        <div className="mb-4">
-          <Typography variant="overline" tone="subtle" className="mb-1">Operator</Typography>
-          <input
-            type="text"
+        <Field label="Operator" className="mb-4">
+          <TextInput
             placeholder="Text search"
             value={filters.operator}
             onChange={(e) => set("operator", e.target.value)}
-            className={inputCls}
           />
-        </div>
+        </Field>
 
         <Button onClick={onApply} variant="infoOutline" size="md" className="w-full py-1.5">
           <Typography as="span" variant="controlStrong" tone="info">Apply Filter</Typography>

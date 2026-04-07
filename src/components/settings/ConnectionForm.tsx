@@ -1,8 +1,10 @@
 import { useState } from "react";
 import useSettingsStore from "../../store/settingsStore";
-import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
+import Field from "../ui/Field";
+import TextInput from "../ui/TextInput";
+import Typography from "../ui/Typography";
 
 export default function ConnectionForm() {
   const { jetsonIp, rosbridgePort, fastapiUrl, updateSettings } = useSettingsStore();
@@ -28,41 +30,26 @@ export default function ConnectionForm() {
   return (
     <MissionPanel title="System & Network Configuration" bodyClassName="p-4">
       <div className="space-y-3">
-        <div>
-          <Typography as="label" variant="overline" tone="subtle" className="mb-1 block font-bold tracking-[0.14em]">
-            Robot IP
-          </Typography>
-          <input
-            type="text"
+        <Field label="Robot IP">
+          <TextInput
             value={draft.jetsonIp}
             onChange={(e) => setDraft((d) => ({ ...d, jetsonIp: e.target.value }))}
-            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           />
-        </div>
+        </Field>
 
-        <div>
-          <Typography as="label" variant="overline" tone="subtle" className="mb-1 block font-bold tracking-[0.14em]">
-            Rosbridge Port
-          </Typography>
-          <input
-            type="text"
+        <Field label="Rosbridge Port">
+          <TextInput
             value={draft.rosbridgePort}
             onChange={(e) => setDraft((d) => ({ ...d, rosbridgePort: e.target.value }))}
-            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           />
-        </div>
+        </Field>
 
-        <div>
-          <Typography as="label" variant="overline" tone="subtle" className="mb-1 block font-bold tracking-[0.14em]">
-            Backend URL
-          </Typography>
-          <input
-            type="text"
+        <Field label="Backend URL">
+          <TextInput
             value={draft.fastapiUrl}
             onChange={(e) => setDraft((d) => ({ ...d, fastapiUrl: e.target.value }))}
-            className="w-full rounded border border-mission-border bg-mission-bg px-3 py-1.5 font-mono text-mission-control text-mission-text focus:border-mission-info focus:outline-none"
           />
-        </div>
+        </Field>
 
         <Button
           onClick={handleSave}

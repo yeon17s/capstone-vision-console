@@ -2,6 +2,7 @@ import useSettingsStore from "../../store/settingsStore";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
+import RangeField from "../ui/RangeField";
 
 export default function AIConfig() {
   const { confidenceThreshold, audioAlarmEnabled, volume, updateSettings } =
@@ -12,33 +13,18 @@ export default function AIConfig() {
   return (
     <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4">
       {/* Confidence Threshold */}
-      <div className="mb-5">
-        <div className="mb-1 flex items-center justify-between">
-          <Typography as="label" variant="overline" className="font-bold text-mission-text/90">
-            Confidence Threshold
-          </Typography>
-          <Typography as="span" variant="monoStrong" tone="info">
-            {thresholdPct}%
-          </Typography>
-        </div>
-        <div className="flex items-center gap-2">
-          <Typography as="span" variant="overline" className="text-mission-text/30">0</Typography>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={thresholdPct}
-            onChange={(e) =>
-              updateSettings({ confidenceThreshold: Number(e.target.value) / 100 })
-            }
-            className="h-1.5 flex-1 cursor-pointer accent-[var(--color-accent-blue)]"
-          />
-          <Typography as="span" variant="overline" className="text-mission-text/30">100</Typography>
-        </div>
-        <Typography variant="overline" tone="subtle" className="mt-1 tracking-[0.08em] text-mission-text/40">
-          Current threshold: {thresholdPct}%
-        </Typography>
-      </div>
+      <RangeField
+        className="mb-5"
+        label="Confidence Threshold"
+        value={thresholdPct}
+        valueLabel={`${thresholdPct}%`}
+        min={0}
+        max={100}
+        onChange={(e) =>
+          updateSettings({ confidenceThreshold: Number(e.target.value) / 100 })
+        }
+        description={`Current threshold: ${thresholdPct}%`}
+      />
 
       {/* Audio Alarm */}
       <div className="mb-4">
@@ -66,9 +52,10 @@ export default function AIConfig() {
       </div>
 
       {/* Volume */}
-      <div>
-        <div className="mb-1 flex items-center justify-between">
-          <Typography variant="overline" className="font-bold text-mission-text/90">Volume</Typography>
+      <RangeField
+        label="Volume"
+        value={volume}
+        valueLabel={
           <Typography
             as="span"
             variant="monoStrong"
@@ -76,21 +63,12 @@ export default function AIConfig() {
           >
             {volume}%
           </Typography>
-        </div>
-        <div className="flex items-center gap-2">
-          <Typography as="span" variant="overline" className="text-mission-text/30">0</Typography>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={volume}
-            disabled={!audioAlarmEnabled}
-            onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
-            className="h-1.5 flex-1 cursor-pointer accent-[var(--color-accent-blue)] disabled:cursor-not-allowed disabled:opacity-30"
-          />
-          <Typography as="span" variant="overline" className="text-mission-text/30">100</Typography>
-        </div>
-      </div>
+        }
+        min={0}
+        max={100}
+        disabled={!audioAlarmEnabled}
+        onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
+      />
     </MissionPanel>
   );
 }
