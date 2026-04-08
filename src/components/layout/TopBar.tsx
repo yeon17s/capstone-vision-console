@@ -30,37 +30,39 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-mission-border bg-mission-bg px-6 py-3">
-      {/* Branding */}
-      <div className="flex min-w-[200px] items-center gap-3">
-        <Typography as="span" variant="brand">
-          RCOD
-        </Typography>
-        <span className="text-mission-border">|</span>
-        <Typography as="span" variant="overline" className="tracking-[0.32em]">
-          Mission Console
-        </Typography>
+      <div className="flex items-center gap-8">
+        {/* Branding */}
+        <div className="flex min-w-[100px] items-center gap-3">
+          <Typography as="span" variant="brand">
+            RCOD
+          </Typography>
+          <span className="text-mission-border">|</span>
+          <Typography as="span" variant="overline" className="tracking-[0.32em]">
+            Mission Console
+          </Typography>
+        </div>
+
+        {/* Top Navigation */}
+        <nav className="flex gap-3">
+          {TABS.map((tab) => (
+            <Button
+              key={tab}
+              onClick={() => onTabChange(tab)}
+              variant="nav"
+              size="lg"
+              active={activeTab === tab}
+              className="min-w-[152px]"
+            >
+              <Typography as="span" variant="controlStrong" className={activeTab === tab ? "text-mission-bg" : ""}>
+                {tab}
+              </Typography>
+            </Button>
+          ))}
+        </nav>
       </div>
 
-      {/* Tab Navigation — centered */}
-      <nav className="flex gap-3">
-        {TABS.map((tab) => (
-          <Button
-            key={tab}
-            onClick={() => onTabChange(tab)}
-            variant="nav"
-            size="lg"
-            active={activeTab === tab}
-            className="min-w-[152px]"
-          >
-            <Typography as="span" variant="controlStrong" className={activeTab === tab ? "text-mission-bg" : ""}>
-              {tab}
-            </Typography>
-          </Button>
-        ))}
-      </nav>
-
       {/* Status Widgets */}
-      <div className="flex min-w-[700px] items-center justify-end gap-3">
+      <div className="flex min-w-[500px] items-center justify-end gap-3 rounded-[18px] border border-[var(--color-accent-yellow)] p-1">
         <div className="rounded-lg border border-mission-border bg-mission-panel px-3 py-2">
           <Typography as="span" variant="monoStrong">○</Typography>
         </div>

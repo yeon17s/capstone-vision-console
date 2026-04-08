@@ -34,7 +34,7 @@ const BADGE_TONE: Record<DiagStatus, "success" | "warning" | "danger" | "muted">
 
 export default function DiagnosticsMonitor() {
   return (
-    <MissionPanel title="Diagnostics Monitor" bodyClassName="space-y-1.5 p-4">
+    <MissionPanel title="Diagnostics Monitor" bodyClassName="space-y-1.5 p-4" borderTone="mvp">
         {DIAG_ITEMS.map(({ label, detail, status }) => (
           <MissionCard
             key={label}

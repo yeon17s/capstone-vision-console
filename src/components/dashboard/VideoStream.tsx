@@ -6,6 +6,8 @@ export default function VideoStream() {
 
   return (
     <>
+      <div className="pointer-events-none absolute inset-0 z-10 rounded-[20px] border border-[var(--color-accent-yellow)]" />
+
       <img
         src={streamUrl}
         alt="Camera feed"
@@ -19,7 +21,7 @@ export default function VideoStream() {
           </Typography>
         </div>
 
-        <div className="rounded-lg border border-mission-border bg-mission-panel px-3 py-1.5">
+        <div className="rounded-lg border border-[var(--color-accent-yellow)] bg-mission-panel px-3 py-1.5">
           <Typography variant="overline" className="tracking-[0.14em]">Toggle Visual View (Spacebar)</Typography>
         </div>
       </div>

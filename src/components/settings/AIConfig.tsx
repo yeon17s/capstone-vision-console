@@ -11,7 +11,7 @@ export default function AIConfig() {
   const thresholdPct = Math.round(confidenceThreshold * 100);
 
   return (
-    <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4">
+    <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4" borderTone="mvp">
       {/* Confidence Threshold */}
       <RangeField
         className="mb-5"

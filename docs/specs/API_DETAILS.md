@@ -11,7 +11,7 @@ Detailed runtime/API contracts extracted from the capstone specs.
 - Swagger: `http://121.156.245.81:8000/docs`
 
 ## Frontend/Backend Split
-- Video invert mode is frontend-only: apply CSS `filter: invert(1)`
+- `VideoStream` invert mode is frontend-only: apply CSS `filter: invert(1)`
 - ROS control should go browser -> `roslibjs` -> Jetson directly; do not proxy through FastAPI
 
 ## ROS Topics
@@ -23,18 +23,20 @@ Detailed runtime/API contracts extracted from the capstone specs.
 - Camera stream source in spec: `/cv_camera/image_raw` via `web_video_server`
 
 ## Drive Rules
+- `DriveController` uses `/cmd_vel` for manual movement
+- `DriveModeControl` switches between `manual` and `auto patrol` state
 - `linear.x > 0`: forward
 - `linear.x < 0`: backward
 - `angular.z > 0`: left
 - `angular.z < 0`: right
 - Suggested drive speed from spec: `linear.x` around `0.1..0.2`
-- E-stop publishes a single zero-velocity message immediately
+- `EStopButton` publishes a single zero-velocity message immediately
 - E-stop has priority over any in-flight drive command
 
 ## FastAPI Endpoints
-- `GET /ping`: diagnostics health check
-- `GET /api/settings/threshold`: read threshold
-- `POST /api/settings/threshold`: update threshold with `{ "threshold": number }`
+- `GET /ping`: `DiagnosticsMonitor` health check
+- `GET /api/settings/threshold`: `AIConfig` threshold read
+- `POST /api/settings/threshold`: `AIConfig` threshold update with `{ "threshold": number }`
 - `GET /api/history`: detection history; spec currently says dummy data is acceptable for MVP
 
 ## AI WebSocket Contract
@@ -59,10 +61,10 @@ Detailed runtime/API contracts extracted from the capstone specs.
   - set `class` to `"none"`
   - set `confidence` to `0`
   - set `bbox` to zeros
-- When `"none"` arrives, frontend should clear bbox but keep overlay canvas mounted
-- Threshold filtering is global and must reflect Settings changes immediately
+- When `"none"` arrives, `AIOverlay` should clear bbox but keep the overlay canvas mounted
+- Threshold filtering is global and must reflect `AIConfig` changes immediately
 
 ## Diagnostics Signals
-- UI diagnostics should cover ROS bridge, FastAPI, and camera connectivity
-- Spec also mentions network ping / round-trip latency display for ROS or backend checks
-- Battery monitor warning threshold: `<= 20%`
+- `DiagnosticsMonitor` should cover ROS bridge, FastAPI, and camera connectivity
+- `TopBar` should show network ping / round-trip latency in `ms`
+- `TopBar` battery warning threshold: `<= 20%`

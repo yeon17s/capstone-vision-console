@@ -40,6 +40,7 @@ export default function AIStatusPanel() {
       className="shrink-0"
       compactBody
       bodyClassName="p-0"
+      borderTone="mvp"
       footer={
         <Typography variant="overline" as="p" className="text-center font-bold tracking-[0.32em]">
           AI Detection Status Panel

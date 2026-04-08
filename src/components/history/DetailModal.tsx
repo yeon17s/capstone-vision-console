@@ -75,7 +75,7 @@ const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warnin
 export default function DetailModal({ entry, status, onMarkFalsePositive }: DetailModalProps) {
   if (!entry) {
     return (
-      <MissionPanel className="shrink-0" bodyClassName="flex items-center justify-center py-6">
+      <MissionPanel className="h-full" bodyClassName="flex h-full items-center justify-center py-6">
         <Typography variant="control" className="text-mission-text/30">Select a row to view details</Typography>
       </MissionPanel>
     );
@@ -86,7 +86,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
 
   return (
     <MissionPanel
-      className="shrink-0"
+      className="h-full"
       title="Detail View"
       headerRight={
         <div className="flex items-center gap-2">
@@ -105,13 +105,15 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
           )}
         </div>
       }
-      bodyClassName="grid grid-cols-[auto_1fr_auto] items-start gap-4 p-4"
+      bodyClassName="grid h-full grid-cols-1 grid-rows-[auto_auto_1fr] items-start gap-5 p-4"
     >
         {/* Confidence donut */}
-        <ConfidenceDonut conf={entry.confidence} />
+        <div className="flex items-center justify-center">
+          <ConfidenceDonut conf={entry.confidence} />
+        </div>
 
         {/* Metadata */}
-        <div className="flex flex-col justify-center gap-1.5">
+        <div className="flex flex-col gap-2 rounded-[16px] border border-mission-border bg-mission-bg px-4 py-3">
           <MetaRow label="Timestamp"   value={entry.timestamp} mono />
           <MetaRow label="Class"       value={entry.class} />
           <MetaRow label="Mode"        value={entry.mode ?? "RGB"} accent />
@@ -136,9 +138,9 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         </div>
 
         {/* Image comparison */}
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col items-center gap-1">
-            <div className="flex h-20 w-24 items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+            <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
               <Typography as="p" variant="overline" className="text-center text-mission-text/30">
                 A. Original<br />Photo
               </Typography>
@@ -147,7 +149,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
           </div>
           <div className="flex flex-col items-center gap-1">
             <div
-              className="flex h-20 w-24 items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg"
+              className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg"
               style={{ filter: "invert(1) hue-rotate(180deg)" }}
             >
               <Typography as="p" variant="overline" className="text-center" style={{ filter: "invert(1) hue-rotate(180deg)" }}>

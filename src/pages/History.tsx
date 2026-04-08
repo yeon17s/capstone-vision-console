@@ -91,26 +91,28 @@ export default function History() {
   }
 
   return (
-    <main className="grid min-h-0 flex-1 grid-cols-[280px_1fr] gap-3 overflow-hidden p-3">
+    <main className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px] gap-3 overflow-hidden p-3">
       <FilterBar
         filters={pendingFilters}
         trendHeights={trendHeights}
         onChange={setPendingFilters}
         onApply={handleApplyFilter}
       />
-      <section className="flex min-h-0 flex-col gap-3 overflow-hidden">
+      <section className="min-h-0 overflow-hidden">
         <DetectionTable
           entries={filteredEntries}
           selectedIdx={selectedIdx}
           getStatus={getStatus}
           onSelect={setSelectedIdx}
         />
+      </section>
+      <aside className="min-h-0 overflow-hidden">
         <DetailModal
           entry={selectedEntry}
           status={selectedEntry ? getStatus(selectedEntry) : "Confirmed"}
           onMarkFalsePositive={handleMarkFalsePositive}
         />
-      </section>
+      </aside>
     </main>
   );
 }

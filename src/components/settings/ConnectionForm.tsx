@@ -28,7 +28,7 @@ export default function ConnectionForm() {
   }
 
   return (
-    <MissionPanel title="System & Network Configuration" bodyClassName="p-4">
+    <MissionPanel title="System & Network Configuration" bodyClassName="p-4" borderTone="mvp">
       <div className="space-y-3">
         <Field label="Robot IP">
           <TextInput

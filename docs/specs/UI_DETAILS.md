@@ -4,7 +4,7 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 
 ## Dashboard
 
-### Top Bar
+### TopBar
 - Tabs: `Dashboard`, `History`, `Settings`
 - Status lights: ROS, FastAPI, camera
 - Network ping in `ms`
@@ -15,13 +15,13 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 ### Main Video Area
 - `VideoStream`: render MJPEG source
 - `AIOverlay`: draw bbox and confidence badge
-- `Visual Mode Toggle`: `Spacebar` toggles CSS invert mode
+- `VideoStream` visual mode: `Spacebar` toggles CSS invert mode
 - `CriticalAlarmOverlay`:
   - trigger when detection confidence meets or exceeds threshold
   - flashing red frame
   - warning text popup
   - audio alert if enabled
-- `FreezeFrameCatcher`:
+- Freeze-frame capture:
   - capture about `0.5s` of frames when a detection event happens
   - spec ties capture to image stream plus pose/timestamp context
 - `AIStatusPanel` shows:
@@ -34,7 +34,7 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 
 ### Control Panel
 - `EStopButton`: highest visual priority
-- `DriveModeToggle`: `auto patrol` / `manual`
+- `DriveModeControl`: `auto patrol` / `manual`
 - `DriveController`: joystick drives `/cmd_vel`
 - `PanTiltController`: D-pad sends `/pan_tilt_cmd`
 - `MiniMap`:
@@ -53,11 +53,11 @@ Detailed UI/component contracts extracted from the capstone interface spec.
   - spec also mentions a blink/highlight effect
 
 ## History
-- Left filters:
+- `FilterBar`:
   - date/time range
   - confidence range
   - class selector
-- Optional `Heatmap` toggle:
+- Optional heatmap toggle:
   - plot accumulated detection locations on the map
   - use confidence as density weight
 - `DetectionTable` columns:
@@ -74,21 +74,21 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 ## Settings
 
 ### Connection / Diagnostics
-- Editable values:
+- `ConnectionForm` editable values:
   - TurtleBot IP
   - rosbridge port
   - backend URL
-- Diagnostics should periodically test:
+- `DiagnosticsMonitor` should periodically test:
   - ROS bridge
   - WebSocket / AI connection
   - FastAPI health
 
-### AI Config
+### AIConfig
 - Global threshold slider
 - Audio alarm toggle
 - Spec also mentions volume control
 
-### Storage / Cleanup
+### StorageSettings
 - Storage policy option:
   - save original only
   - save original + inverted

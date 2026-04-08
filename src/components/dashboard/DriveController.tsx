@@ -4,7 +4,7 @@ import Button from "../ui/Button";
 
 export default function DriveController() {
   return (
-    <MissionPanel title="Robot Drive" bodyClassName="px-5 py-4">
+    <MissionPanel title="Robot Drive" bodyClassName="px-5 py-4" borderTone="mvp">
         {/* D-pad + joystick */}
         <div className="flex items-center justify-center">
           <div className="relative h-40 w-40">

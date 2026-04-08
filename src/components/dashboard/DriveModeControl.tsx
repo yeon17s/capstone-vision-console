@@ -4,7 +4,7 @@ import Button from "../ui/Button";
 
 export default function DriveModeControl() {
   return (
-    <MissionPanel title="Drive Mode" bodyClassName="px-5 py-4">
+    <MissionPanel title="Drive Mode" bodyClassName="px-5 py-4" borderTone="mvp">
         <div className="grid grid-cols-2 gap-2">
           <Button variant="panel" size="md" className="py-3">
             <Typography as="span" variant="controlStrong" className="tracking-[0.12em]">Auto Patrol</Typography>
