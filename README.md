@@ -2,8 +2,6 @@
 
 TurtleBot3 모니터링 및 RCOD 기반 위장 객체 탐지를 위한 실시간 시각화 및 제어 UI
 
-**현재 상태:** MVP 구현 중 (로봇/AI 팀 통합 대기)
-
 ---
 
 ## 📋 빠른 시작
@@ -12,7 +10,7 @@ TurtleBot3 모니터링 및 RCOD 기반 위장 객체 탐지를 위한 실시간
 
 ```bash
 # 저장소 클론
-git clone <https://github.com/yeon17s/capstone-vision-console>
+git clone https://github.com/yeon17s/capstone-vision-console
 cd capstone-vision-console
 
 # 의존성 설치
