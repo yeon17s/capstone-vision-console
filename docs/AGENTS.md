@@ -30,7 +30,7 @@ Detailed specs:
 
 ## Structure
 - Pages: `Dashboard.tsx`, `History.tsx`, `Settings.tsx`
-- Dashboard: `VideoStream`, `AIOverlay`, `AIStatusPanel`, `EStopButton`, `DriveController`, `PanTiltController`, `MiniMap`, `AlertFeed`, `CriticalAlarmOverlay`
+- Dashboard: `VideoStream`, `AIOverlay`, `AIStatusPanel`, `DriveController` (includes drive modes + E-stop), `MiniMap`, `AlertFeed`, `CriticalAlarmOverlay`
 - History: `DetectionTable`, `FilterBar`, `DetailModal`
 - Settings: `ConnectionForm`, `DiagnosticsMonitor`, `StorageSettings`, `AIConfig`
 - Stores: `src/store/robotStore.ts`, `src/store/settingsStore.ts`
@@ -62,7 +62,6 @@ Detailed specs:
 - `/battery_state`: battery
 - `/amcl_pose`: pose
 - `/map`: minimap
-- `/pan_tilt_cmd`: pan/tilt
 - Drive rule: `linear.x > 0` forward, `< 0` backward; `angular.z > 0` left, `< 0` right
 - E-stop must publish zero velocity once immediately and override any other drive command
 - AI stream target rate is roughly `10..20 fps` (`0.05s..0.1s` interval)

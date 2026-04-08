@@ -98,10 +98,10 @@ Text summary of `docs/wireframe/*.png` for low-token prompt reuse.
 
 ### Right Control Column
 - `Control Panel` block title
-- E-stop is the most visually dominant control
-- Drive mode toggle directly below E-stop
-- Circular joystick area for robot drive
-- D-pad style camera pan/tilt under joystick
+- `DriveController` unified panel includes:
+  - Circular joystick area for robot drive (up/down/left/right buttons)
+  - Drive mode toggle (auto patrol / manual mode)
+  - E-stop button with highest visual priority
 - Alert feed sits near the bottom as stacked mini cards
 
 ### Alert Cards

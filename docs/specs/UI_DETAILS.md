@@ -33,10 +33,10 @@ Detailed UI/component contracts extracted from the capstone interface spec.
   - FPS
 
 ### Control Panel
-- `EStopButton`: highest visual priority
-- `DriveModeControl`: `auto patrol` / `manual`
-- `DriveController`: joystick drives `/cmd_vel`
-- `PanTiltController`: D-pad sends `/pan_tilt_cmd`
+- `DriveController`: unified control combining:
+  - Joystick UI with directional buttons (up/down/left/right)
+  - Drive mode toggle (`manual` / `auto patrol`)
+  - E-stop button with highest visual priority
 - `MiniMap`:
   - render `/map`
   - show robot pose and heading from `/amcl_pose`
@@ -100,7 +100,6 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 - `/map`: minimap, history heatmap
 - `/battery_state`: battery monitor
 - `/cmd_vel`: E-stop and drive control
-- `/pan_tilt_cmd`: pan/tilt control
 
 ## Notes
 - Inverted image is a frontend presentation mode, not a separate server image asset

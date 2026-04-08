@@ -42,17 +42,10 @@ Staged implementation scope for the capstone vision console.
 - `AIConfig`:
   - threshold slider or numeric input
   - update runtime state immediately
-- `EStopButton`:
-  - publish zero velocity to `/cmd_vel`
-  - override normal drive commands
-  - highest visual priority
-- `DriveModeControl`:
-  - `manual`
-  - `auto patrol` state placeholder
-- `DriveController`:
-  - joystick UI
-  - publish to `/cmd_vel`
-  - forward / backward / left / right
+- `DriveController` (unified control panel):
+  - Joystick UI with directional buttons (forward / backward / left / right)
+  - Drive mode toggle (manual / auto patrol)
+  - E-stop button (publish zero velocity, override all commands, highest priority)
 
 ### Phase 1 Deliverables
 - Connection workflow
@@ -94,9 +87,6 @@ Staged implementation scope for the capstone vision console.
   - include timestamp + pose context
 
 ### Additional Controls / Status
-- `PanTiltController`:
-  - D-pad UI
-  - publish to `/pan_tilt_cmd`
 - `TopBar` status:
   - battery percent from `/battery_state`
   - warning at `<= 20%`
@@ -128,7 +118,6 @@ Staged implementation scope for the capstone vision console.
 - Minimap + waypoint interaction
 - Alert feed
 - Freeze-frame capture
-- Pan/tilt control
 - Battery + latency status
 - History workflow
 - Auto patrol integration
