@@ -1,3 +1,4 @@
+import { useState } from "react";
 import AIOverlay from "../components/dashboard/AIOverlay";
 import AIStatusPanel from "../components/dashboard/AIStatusPanel";
 import AlertFeed from "../components/dashboard/AlertFeed";
@@ -5,8 +6,19 @@ import AlertFeed from "../components/dashboard/AlertFeed";
 import DriveController from "../components/dashboard/DriveController";
 import VideoStream from "../components/dashboard/VideoStream";
 import Typography from "../components/ui/Typography";
+import { useVideoCapture } from "../hooks/useVideoCapture";
 
-export default function Dashboard() {
+interface DashboardProps {
+  onCaptureReady?: (capture: (inverted: boolean) => string | undefined) => void;
+}
+
+export default function Dashboard({ onCaptureReady }: DashboardProps) {
+  const [inverted, setInverted] = useState(false);
+  const { imgRef, capture } = useVideoCapture();
+
+  // expose capture fn to parent (App) on first render
+  if (onCaptureReady) onCaptureReady(capture);
+
   return (
     <main className="grid min-h-0 flex-1 grid-cols-[1.88fr_0.92fr] gap-0 overflow-hidden">
       {/* ══════════════════════════════
@@ -15,13 +27,17 @@ export default function Dashboard() {
       <section className="flex min-h-0 flex-col gap-3 border-r border-mission-border p-4">
         {/* Video container */}
         <div className="relative min-h-0 flex-1 overflow-hidden rounded-[20px] border border-mission-border bg-black shadow-mission-soft">
-          <VideoStream />
+          <VideoStream
+            imgRef={imgRef}
+            inverted={inverted}
+            onToggleInvert={() => setInverted((v) => !v)}
+          />
           <AIOverlay />
-          {/* <CriticalAlarmOverlay /> */} 
+          {/* <CriticalAlarmOverlay /> */}
         </div>
 
         {/* AI Detection Status Strip */}
-        <AIStatusPanel />
+        <AIStatusPanel inverted={inverted} />
       </section>
 
       {/* ══════════════════════════════

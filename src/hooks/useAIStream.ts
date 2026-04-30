@@ -2,9 +2,15 @@ import { useEffect, useRef } from "react";
 import useRobotStore from "../store/robotStore";
 import useSettingsStore from "../store/settingsStore";
 
-function useAIStream(): void {
+interface UseAIStreamOptions {
+  capture?: (inverted: boolean) => string | undefined;
+}
+
+function useAIStream({ capture }: UseAIStreamOptions = {}): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const captureRef = useRef(capture);
+  captureRef.current = capture;
 
   const setDetection = useRobotStore((s) => s.setDetection);
   const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
@@ -50,7 +56,19 @@ function useAIStream(): void {
           setDetection(detection);
 
           if (cls === "person") {
-            pushDetectionLog({ ...detection, timestamp: data.timestamp });
+            const snapshotOriginal = captureRef.current?.(false);
+
+            // capture inverted snapshot ~1.5s after detection
+            setTimeout(() => {
+              if (!isMounted) return;
+              const snapshotInverted = captureRef.current?.(true);
+              pushDetectionLog({
+                ...detection,
+                timestamp: data.timestamp,
+                snapshotOriginal,
+                snapshotInverted,
+              });
+            }, 1500);
           }
         } catch {
           // malformed message — ignore

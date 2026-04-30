@@ -31,7 +31,11 @@ function StatusCell({ label, value, valueClass = "text-mission-text" }: StatusCe
   );
 }
 
-export default function AIStatusPanel() {
+interface AIStatusPanelProps {
+  inverted?: boolean;
+}
+
+export default function AIStatusPanel({ inverted = false }: AIStatusPanelProps) {
   const detection = useRobotStore((s) => s.detection);
   const driveMode = useRobotStore((s) => s.driveMode);
 
@@ -106,8 +110,10 @@ export default function AIStatusPanel() {
         {/* Visual Mode */}
         <div className="flex min-h-[88px] flex-col items-center justify-center gap-1 px-3 py-3">
           <Typography variant="overline" className="tracking-[0.14em]">Visual Mode</Typography>
-          <div className="rounded-md border border-mission-border bg-mission-bg px-3 py-1">
-            <Typography variant="metric">RGB</Typography>
+          <div className={`rounded-md border px-3 py-1 ${inverted ? "border-mission-info bg-mission-info/10" : "border-mission-border bg-mission-bg"}`}>
+            <Typography variant="metric" className={inverted ? "text-mission-info" : ""}>
+              {inverted ? "INVERT" : "RGB"}
+            </Typography>
           </div>
         </div>
       </div>

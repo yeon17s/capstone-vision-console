@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import TopBar from "./components/layout/TopBar";
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
@@ -7,22 +7,23 @@ import useAIStream from "./hooks/useAIStream";
 
 type TabName = "Dashboard" | "History" | "Settings";
 
-const tabs: Record<TabName, React.ComponentType> = {
-  Dashboard,
-  History,
-  Settings,
-};
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabName>("Dashboard");
-  const ActivePage = tabs[activeTab] ?? Dashboard;
 
-  useAIStream();
+  const captureRef = useRef<((inverted: boolean) => string | undefined) | undefined>(undefined);
+
+  const handleCaptureReady = useCallback((fn: (inverted: boolean) => string | undefined) => {
+    captureRef.current = fn;
+  }, []);
+
+  useAIStream({ capture: (inverted) => captureRef.current?.(inverted) });
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-mission-bg text-mission-text">
       <TopBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <ActivePage />
+      {activeTab === "Dashboard" && <Dashboard onCaptureReady={handleCaptureReady} />}
+      {activeTab === "History" && <History />}
+      {activeTab === "Settings" && <Settings />}
     </div>
   );
 }

@@ -1,17 +1,37 @@
+import { useEffect } from "react";
 import Typography from "../ui/Typography";
 
-export default function VideoStream() {
-  const streamUrl =
-    "http://192.168.0.45:8080/stream?topic=/cv_camera/image_raw";
+interface VideoStreamProps {
+  imgRef: React.RefObject<HTMLImageElement | null>;
+  inverted: boolean;
+  onToggleInvert: () => void;
+}
+
+export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoStreamProps) {
+  const streamUrl = "http://192.168.0.45:8080/stream?topic=/cv_camera/image_raw";
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.code === "Space" && e.target === document.body) {
+        e.preventDefault();
+        onToggleInvert();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onToggleInvert]);
 
   return (
     <>
       <div className="pointer-events-none absolute inset-0 z-10 rounded-[20px] border border-[var(--color-accent-yellow)]" />
 
       <img
+        ref={imgRef}
         src={streamUrl}
         alt="Camera feed"
-        className="absolute inset-0 h-full w-full object-cover"
+        crossOrigin="anonymous"
+        className="absolute inset-0 h-full w-full object-cover transition-[filter] duration-150"
+        style={inverted ? { filter: "invert(1) hue-rotate(180deg)" } : undefined}
       />
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-start justify-between">
@@ -21,10 +41,21 @@ export default function VideoStream() {
           </Typography>
         </div>
 
-        <div className="rounded-lg border border-[var(--color-accent-yellow)] bg-mission-panel px-3 py-1.5">
-          <Typography variant="overline" className="tracking-[0.14em]">Toggle Visual View (Spacebar)</Typography>
+        <div
+          className={[
+            "cursor-pointer rounded-lg border bg-mission-panel px-3 py-1.5 transition-colors",
+            inverted
+              ? "border-mission-info bg-mission-info/10"
+              : "border-[var(--color-accent-yellow)]",
+          ].join(" ")}
+          onClick={onToggleInvert}
+        >
+          <Typography variant="overline" className="tracking-[0.14em]">
+            {inverted ? "INVERTED (Spacebar)" : "RGB (Spacebar)"}
+          </Typography>
         </div>
       </div>
+
       <div className="absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-black/45 to-transparent" />
     </>
   );
