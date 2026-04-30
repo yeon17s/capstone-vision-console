@@ -16,18 +16,18 @@ export interface Filters {
 }
 
 const DEMO_ENTRIES: DetectionLogEntry[] = [
-  { timestamp: "2026-04-07 10:45:22", class: "person", confidence: 0.985, bbox: { x: 150, y: 120, w: 80, h: 140 }, fps: 24.0, frameDelayMs: 42, mode: "RGB" },
-  { timestamp: "2026-04-07 10:44:18", class: "person", confidence: 0.850, bbox: { x: 90,  y: 60,  w: 60, h: 120 }, fps: 22.1, frameDelayMs: 55, mode: "RGB" },
-  { timestamp: "2026-04-07 10:43:05", class: "person", confidence: 0.921, bbox: { x: 200, y: 90,  w: 70, h: 130 }, fps: 23.5, frameDelayMs: 48, mode: "INVERT" },
-  { timestamp: "2026-04-07 10:41:30", class: "person", confidence: 0.789, bbox: { x: 50,  y: 40,  w: 55, h: 100 }, fps: 21.0, frameDelayMs: 62, mode: "RGB" },
-  { timestamp: "2026-04-07 10:39:55", class: "person", confidence: 0.945, bbox: { x: 180, y: 110, w: 85, h: 145 }, fps: 24.8, frameDelayMs: 40, mode: "RGB" },
-  { timestamp: "2026-04-07 10:38:12", class: "none",   confidence: 0.610, bbox: { x: 0,   y: 0,   w: 0,  h: 0   }, fps: 20.0, frameDelayMs: 50, mode: "EDGE" },
-  { timestamp: "2026-04-07 10:36:44", class: "person", confidence: 0.882, bbox: { x: 120, y: 80,  w: 65, h: 125 }, fps: 23.0, frameDelayMs: 46, mode: "RGB" },
-  { timestamp: "2026-04-07 10:35:00", class: "person", confidence: 0.911, bbox: { x: 160, y: 100, w: 75, h: 135 }, fps: 24.2, frameDelayMs: 43, mode: "INVERT" },
-  { timestamp: "2026-04-07 10:33:30", class: "person", confidence: 0.859, bbox: { x: 100, y: 70,  w: 60, h: 115 }, fps: 22.5, frameDelayMs: 52, mode: "RGB" },
-  { timestamp: "2026-04-07 10:31:15", class: "person", confidence: 0.730, bbox: { x: 70,  y: 50,  w: 50, h: 105 }, fps: 21.8, frameDelayMs: 58, mode: "RGB" },
-  { timestamp: "2026-04-07 10:29:40", class: "person", confidence: 0.968, bbox: { x: 140, y: 95,  w: 78, h: 138 }, fps: 25.0, frameDelayMs: 39, mode: "RGB" },
-  { timestamp: "2026-04-07 10:27:00", class: "none",   confidence: 0.540, bbox: { x: 0,   y: 0,   w: 0,  h: 0   }, fps: 19.5, frameDelayMs: 65, mode: "EDGE" },
+  { timestamp: "2026-04-07 10:45:22", class: "person", confidence: 98.5, bbox: { x: 150, y: 120, w: 80, h: 140 }, fps: 24.0, frameDelayMs: 42, mode: "RGB" },
+  { timestamp: "2026-04-07 10:44:18", class: "person", confidence: 85.0, bbox: { x: 90,  y: 60,  w: 60, h: 120 }, fps: 22.1, frameDelayMs: 55, mode: "RGB" },
+  { timestamp: "2026-04-07 10:43:05", class: "person", confidence: 92.1, bbox: { x: 200, y: 90,  w: 70, h: 130 }, fps: 23.5, frameDelayMs: 48, mode: "INVERT" },
+  { timestamp: "2026-04-07 10:41:30", class: "person", confidence: 78.9, bbox: { x: 50,  y: 40,  w: 55, h: 100 }, fps: 21.0, frameDelayMs: 62, mode: "RGB" },
+  { timestamp: "2026-04-07 10:39:55", class: "person", confidence: 94.5, bbox: { x: 180, y: 110, w: 85, h: 145 }, fps: 24.8, frameDelayMs: 40, mode: "RGB" },
+  { timestamp: "2026-04-07 10:38:12", class: "none",   confidence: 61.0, bbox: { x: 0,   y: 0,   w: 0,  h: 0   }, fps: 20.0, frameDelayMs: 50, mode: "EDGE" },
+  { timestamp: "2026-04-07 10:36:44", class: "person", confidence: 88.2, bbox: { x: 120, y: 80,  w: 65, h: 125 }, fps: 23.0, frameDelayMs: 46, mode: "RGB" },
+  { timestamp: "2026-04-07 10:35:00", class: "person", confidence: 91.1, bbox: { x: 160, y: 100, w: 75, h: 135 }, fps: 24.2, frameDelayMs: 43, mode: "INVERT" },
+  { timestamp: "2026-04-07 10:33:30", class: "person", confidence: 85.9, bbox: { x: 100, y: 70,  w: 60, h: 115 }, fps: 22.5, frameDelayMs: 52, mode: "RGB" },
+  { timestamp: "2026-04-07 10:31:15", class: "person", confidence: 73.0, bbox: { x: 70,  y: 50,  w: 50, h: 105 }, fps: 21.8, frameDelayMs: 58, mode: "RGB" },
+  { timestamp: "2026-04-07 10:29:40", class: "person", confidence: 96.8, bbox: { x: 140, y: 95,  w: 78, h: 138 }, fps: 25.0, frameDelayMs: 39, mode: "RGB" },
+  { timestamp: "2026-04-07 10:27:00", class: "none",   confidence: 54.0, bbox: { x: 0,   y: 0,   w: 0,  h: 0   }, fps: 19.5, frameDelayMs: 65, mode: "EDGE" },
 ];
 
 const DEFAULT_FILTERS: Filters = {
@@ -50,8 +50,7 @@ export default function History() {
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
-      const confPct = e.confidence * 100;
-      if (confPct < appliedFilters.confMin) return false;
+      if (e.confidence < appliedFilters.confMin) return false;
       if (appliedFilters.cls && e.class !== appliedFilters.cls) return false;
       if (appliedFilters.search) {
         const q = appliedFilters.search.toLowerCase();

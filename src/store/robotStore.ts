@@ -26,6 +26,8 @@ export interface Detection {
 
 export interface DetectionLogEntry extends Detection {
   timestamp: string;
+  snapshotOriginal?: string;  // data URL, captured at detection moment
+  snapshotInverted?: string;  // data URL, captured 1–2s after detection
 }
 
 type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected";

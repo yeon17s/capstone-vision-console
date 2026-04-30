@@ -38,11 +38,12 @@ function MetaRow({ label, value, mono = false, accent = false }: MetaRowProps) {
 }
 
 function ConfidenceDonut({ conf }: { conf: number }) {
-  const pct = conf * 100;
+  // conf is 0–100 percent scale
+  const pct = conf;
   const dash = pct.toFixed(1);
   const gap = (100 - pct).toFixed(1);
   const color =
-    conf >= 0.85 ? "#22c55e" : conf >= 0.70 ? "#eab308" : "#94a3b8";
+    conf >= 85 ? "#22c55e" : conf >= 70 ? "#eab308" : "#94a3b8";
 
   return (
     <div className="flex flex-col items-center justify-center gap-1">
@@ -72,7 +73,7 @@ const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warnin
   FalsePositive: { label: "False Positive", tone: "muted" },
 };
 
-export default function DetailModal({ entry, status, onMarkFalsePositive }: DetailModalProps) {
+export default function DetailModal({ entry, status }: DetailModalProps) {
   if (!entry) {
     return (
       <MissionPanel className="h-full" bodyClassName="flex h-full items-center justify-center py-6">
@@ -94,12 +95,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
             {statusLabel}
           </StatusBadge>
           {!isFalsePositive && (
-            <Button
-              onClick={onMarkFalsePositive}
-              variant="dangerOutline"
-              size="sm"
-              className="px-2 py-0.5"
-            >
+            <Button variant="dangerOutline" size="sm" className="px-2 py-0.5">
               <Typography as="span" variant="overline" tone="danger" className="font-bold">False Positive</Typography>
             </Button>
           )}
@@ -129,7 +125,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
               Frame Delay
             </Typography>
             <StatusIndicator
-              tone={entry.frameDelayMs <= 60 ? "success" : entry.frameDelayMs <= 120 ? "warning" : "danger"}
+              tone={entry.frameDelayMs <= 200 ? "success" : entry.frameDelayMs <= 500 ? "warning" : "danger"}
               label={`${entry.frameDelayMs} ms`}
               showDot={false}
               textVariant="monoStrong"
@@ -141,22 +137,31 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              <Typography as="p" variant="overline" className="text-center text-mission-text/30">
-                A. Original<br />Photo
-              </Typography>
+              {entry.snapshotOriginal ? (
+                <img src={entry.snapshotOriginal} alt="Original (Detection Moment)" className="h-full w-full object-cover" />
+              ) : (
+                <Typography as="p" variant="overline" className="text-center text-mission-text/30">
+                  No Image
+                </Typography>
+              )}
             </div>
-            <Typography as="span" variant="overline" className="text-mission-text/30">Original</Typography>
+            <Typography as="span" variant="overline" className="text-mission-text/30">
+              Original<br />(Detection Moment)
+            </Typography>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <div
-              className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg"
-              style={{ filter: "invert(1) hue-rotate(180deg)" }}
-            >
-              <Typography as="p" variant="overline" className="text-center" style={{ filter: "invert(1) hue-rotate(180deg)" }}>
-                B. Inverted<br />Photo
-              </Typography>
+            <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+              {entry.snapshotInverted ? (
+                <img src={entry.snapshotInverted} alt="Inverted (Detection Moment)" className="h-full w-full object-cover" style={{ filter: "invert(1) hue-rotate(180deg)" }} />
+              ) : (
+                <Typography as="p" variant="overline" className="text-center text-mission-text/30">
+                  No Image
+                </Typography>
+              )}
             </div>
-            <Typography as="span" variant="overline" className="text-mission-text/30">Inverted</Typography>
+            <Typography as="span" variant="overline" className="text-mission-text/30">
+              Inverted<br />(Detection Moment)
+            </Typography>
           </div>
         </div>
     </MissionPanel>
