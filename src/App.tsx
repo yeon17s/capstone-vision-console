@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import useAIStream from "./hooks/useAIStream";
+import useRosConnection from "./hooks/useRosConnection";
 
 type TabName = "Dashboard" | "History" | "Settings";
 
@@ -18,6 +19,7 @@ export default function App() {
   }, []);
 
   useAIStream({ capture: (inverted) => captureRef.current?.(inverted) });
+  useRosConnection();
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-mission-bg text-mission-text">

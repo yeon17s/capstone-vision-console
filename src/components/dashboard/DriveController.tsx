@@ -1,13 +1,43 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import * as ROSLIB from "roslib";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import useRobotStore from "../../store/robotStore";
+import useSettingsStore from "../../store/settingsStore";
 
 type DriveMode = "manual" | "auto";
 
+const LINEAR_SPEED  = 0.2;
+const ANGULAR_SPEED = 0.5;
+
+const DRIVE_VECTORS: Record<"forward" | "backward" | "left" | "right", { lx: number; az: number }> = {
+  forward:  { lx:  LINEAR_SPEED,  az: 0 },
+  backward: { lx: -LINEAR_SPEED,  az: 0 },
+  left:     { lx: 0, az:  ANGULAR_SPEED },
+  right:    { lx: 0, az: -ANGULAR_SPEED },
+};
+
+function makeCmdVelTopic(ros: ROSLIB.Ros) {
+  return new ROSLIB.Topic({
+    ros,
+    name: "/cmd_vel",
+    messageType: "geometry_msgs/Twist",
+  });
+}
+
+function publishVelocity(ros: ROSLIB.Ros, lx: number, az: number) {
+  const topic = makeCmdVelTopic(ros);
+  topic.publish({ linear: { x: lx, y: 0, z: 0 }, angular: { x: 0, y: 0, z: az } } as any);
+}
+
+function createRos() {
+  const { jetsonIp, rosbridgePort } = useSettingsStore.getState();
+  return new ROSLIB.Ros({ url: `ws://${jetsonIp}:${rosbridgePort}` });
+}
+
 export default function DriveController() {
-  const { driveMode, setDriveMode } = useRobotStore();
+  const { driveMode, setDriveMode, rosConnected } = useRobotStore();
   const [localMode, setLocalMode] = useState<DriveMode>(driveMode);
 
   const handleModeChange = (mode: DriveMode) => {
@@ -15,15 +45,20 @@ export default function DriveController() {
     setDriveMode(mode);
   };
 
-  const handleDriveCommand = (direction: "forward" | "backward" | "left" | "right") => {
-    // TODO: Publish to /cmd_vel based on direction
-    console.log("Drive command:", direction);
-  };
+  const handleDriveCommand = useCallback(
+    (direction: "forward" | "backward" | "left" | "right") => {
+      if (!rosConnected) return;
+      const { lx, az } = DRIVE_VECTORS[direction];
+      const ros = createRos();
+      publishVelocity(ros, lx, az);
+    },
+    [rosConnected]
+  );
 
-  const handleEStop = () => {
-    // TODO: Publish zero velocity to /cmd_vel
-    console.log("E-STOP activated");
-  };
+  const handleEStop = useCallback(() => {
+    const ros = createRos();
+    publishVelocity(ros, 0, 0);
+  }, []);
 
   return (
     <MissionPanel title="Robot Drive" bodyClassName="p-5" borderTone="mvp">
