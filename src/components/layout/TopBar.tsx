@@ -1,6 +1,7 @@
 import Typography from "../ui/Typography";
 import Button from "../ui/Button";
 import StatusIndicator from "../ui/StatusIndicator";
+import useRobotStore from "../../store/robotStore";
 
 type TabName = "Dashboard" | "History" | "Settings";
 
@@ -11,22 +12,18 @@ interface TopBarProps {
   onTabChange: (tab: TabName) => void;
 }
 
-function getPingTone(pingMs: number): string {
-  if (pingMs <= 40) return "text-mission-active";
-  if (pingMs <= 90) return "text-mission-suspicious";
-  return "text-mission-critical";
-}
-
-function getPingBadgeTone(pingMs: number): "success" | "warning" | "danger" {
-  if (pingMs <= 40) return "success";
-  if (pingMs <= 90) return "warning";
+function getBatteryTone(pct: number): "success" | "warning" | "danger" {
+  if (pct > 20) return "success";
+  if (pct > 10) return "warning";
   return "danger";
 }
 
 export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
-  const pingMs = 32;
-  const pingToneClass = getPingTone(pingMs);
-  const pingBadgeTone = getPingBadgeTone(pingMs);
+  const rosConnected    = useRobotStore((s) => s.rosConnected);
+  const aiConnected     = useRobotStore((s) => s.aiConnected);
+  const fastapiConnected = useRobotStore((s) => s.fastapiConnected);
+  const cameraConnected = useRobotStore((s) => s.cameraConnected);
+  const batteryPercent  = useRobotStore((s) => s.batteryPercent);
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-mission-border bg-mission-bg px-6 py-3">
@@ -69,26 +66,46 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
 
         <div className="flex items-center gap-3 rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
           <div className="flex gap-3">
-            <StatusIndicator tone="success" label="ROS" size="md" className="tracking-[0.16em]" />
-            <StatusIndicator tone="success" label="FastAPI" size="md" className="tracking-[0.16em]" />
-            <StatusIndicator tone="danger" label="Camera" size="md" className="tracking-[0.16em]" />
+            <StatusIndicator
+              tone={rosConnected ? "success" : "danger"}
+              label="ROS"
+              size="md"
+              className="tracking-[0.16em]"
+            />
+            <StatusIndicator
+              tone={fastapiConnected ? "success" : "danger"}
+              label="FastAPI"
+              size="md"
+              className="tracking-[0.16em]"
+            />
+            <StatusIndicator
+              tone={cameraConnected ? "success" : "danger"}
+              label="Camera"
+              size="md"
+              className="tracking-[0.16em]"
+            />
           </div>
         </div>
 
         <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
-          <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">Ping:</Typography>{" "}
+          <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">AI:</Typography>{" "}
           <StatusIndicator
-            tone={pingBadgeTone}
-            label={`${pingMs}ms`}
+            tone={aiConnected ? "success" : "danger"}
+            label={aiConnected ? "Live" : "Off"}
             showDot={false}
             textVariant="monoStrong"
-            className={pingToneClass}
           />
         </div>
 
         <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
           <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">Battery:</Typography>{" "}
-          <Typography as="span" variant="monoStrong" tone="success">85%</Typography>
+          <Typography
+            as="span"
+            variant="monoStrong"
+            tone={batteryPercent > 0 ? getBatteryTone(batteryPercent) : "muted"}
+          >
+            {batteryPercent > 0 ? `${batteryPercent}%` : "--"}
+          </Typography>
         </div>
       </div>
     </header>
