@@ -335,7 +335,7 @@ import CriticalAlarmOverlay from "../components/dashboard/CriticalAlarmOverlay";
 - DetectionTable이 실제 `detectionLog` 와 연결되었는지
 - FilterBar 필터가 적용되는지
 - DetailModal 선택 상태 관리
-- False Positive 마킹 로직 (현재는 있는데 MVP에서 제거 필요)
+- False Positive 마킹 로직 (MVP는 버튼만 있고 기능은 이후에 구현)
 
 ---
 
