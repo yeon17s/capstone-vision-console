@@ -9,6 +9,7 @@ Detailed specs:
 
 ## Goal
 - TurtleBot3 monitoring UI for RCOD-based camouflaged-object detection
+- Single-class person detection; multiclass deferred to June Phase 2
 - Real-time visualization plus manual control
 - Single RGB camera; support both auto patrol and operator-driven search
 
@@ -54,6 +55,7 @@ Detailed specs:
 - FastAPI docs: `http://121.156.245.81:8000/docs`
 
 ## Runtime Rules
+- AI `class` field: `"person"` or `"none"` only
 - AI `confidence` is `0..100`
 - If detection is missing or below threshold, use `class: "none"`
 - If `class === "none"`, clear bbox only; keep the overlay canvas mounted
@@ -66,6 +68,15 @@ Detailed specs:
 - E-stop must publish zero velocity once immediately and override any other drive command
 - AI stream target rate is roughly `10..20 fps` (`0.05s..0.1s` interval)
 - Battery warning threshold from spec: `<= 20%`
+- **frame_delay_ms thresholds** (3-tier UI warning):
+  - `0–200ms`: normal (green)
+  - `200–500ms`: warning (yellow)
+  - `> 500ms`: critical (red + warning text)
+- **Archiving** (MVP): snapshot at detection moment + snapshot ~1–2s after
+  - extract via `canvas.toDataURL()` from `<img>` tag
+  - 2 total snapshots per detection
+  - ring-buffer clip approach deferred to June Phase 2
+- **False Positive reporting**: Phase 2 feature; not in MVP
 
 ## Implementation Bias
 - Prefer simple state flow over extra abstraction

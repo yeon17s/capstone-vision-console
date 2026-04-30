@@ -21,15 +21,20 @@ Detailed UI/component contracts extracted from the capstone interface spec.
   - flashing red frame
   - warning text popup
   - audio alert if enabled
-- Freeze-frame capture:
-  - capture about `0.5s` of frames when a detection event happens
-  - spec ties capture to image stream plus pose/timestamp context
+- Freeze-frame capture (MVP):
+  - snapshot at detection moment
+  - snapshot ~1–2s after detection
+  - extract via `canvas.toDataURL()` from `<img>` tag
+  - 2 total snapshots per detection
 - `AIStatusPanel` shows:
   - last class
   - confidence
   - current mode
   - visual mode
-  - frame delay
+  - frame delay (frame_delay_ms 3-tier color indicator):
+    - 0–200ms → green (normal)
+    - 200–500ms → yellow (warning)
+    - 500ms+ → red (critical + warning text)
   - FPS
 
 ### Control Panel
@@ -51,6 +56,9 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 - Alert card interaction:
   - clicking a card should focus the minimap on that detection point
   - spec also mentions a blink/highlight effect
+- **Phase 2**: False Positive reporting button on each card
+  - user can mark detection as false positive
+  - optional note submission
 
 ## History
 - `FilterBar`:
@@ -68,8 +76,8 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 - `DetailModal`:
   - time and map location
   - large confidence visualization
-  - original image + inverted image side-by-side
-  - before/after comparison slider
+  - original image + inverted image side-by-side (based on detection-moment snapshot)
+  - before/after comparison slider (Phase 2 with ring-buffer clips)
 
 ## Settings
 

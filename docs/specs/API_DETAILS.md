@@ -43,6 +43,7 @@ Detailed runtime/API contracts extracted from the capstone specs.
 - Endpoint: `/ws/ai_stream`
 - Expected push interval: about `0.05s..0.1s`
 - Practical target: about `10..20 fps`
+- `class` field: `"person"` or `"none"` only (single-class detection; multiclass deferred to June Phase 2)
 
 ```json
 {
@@ -63,6 +64,10 @@ Detailed runtime/API contracts extracted from the capstone specs.
   - set `bbox` to zeros
 - When `"none"` arrives, `AIOverlay` should clear bbox but keep the overlay canvas mounted
 - Threshold filtering is global and must reflect `AIConfig` changes immediately
+- **frame_delay_ms thresholds** (frontend uses these to color-code status):
+  - `<= 200ms`: normal (green)
+  - `200ms ~ 500ms`: warning (yellow)
+  - `> 500ms`: critical (red)
 
 ## Diagnostics Signals
 - `DiagnosticsMonitor` should cover ROS bridge, FastAPI, and camera connectivity

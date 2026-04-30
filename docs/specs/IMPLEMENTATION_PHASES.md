@@ -27,14 +27,17 @@ Staged implementation scope for the capstone vision console.
 - `VideoStream`: MJPEG from `/cv_camera/image_raw`
 - `AIOverlay`:
   - bbox
-  - class
+  - class: `"person"` or `"none"` only (single-class detection)
   - confidence
   - keep canvas mounted when `class === "none"`
 - `AIStatusPanel`:
   - last class
   - confidence
   - FPS
-  - frame delay
+  - frame delay (frame_delay_ms visualized by 3-tier color):
+    - 0 ~ 200ms → green (normal)
+    - 200 ~ 500ms → yellow (warning)
+    - 500ms+ → red (critical)
   - drive mode
   - visual mode
 
@@ -83,49 +86,15 @@ Staged implementation scope for the capstone vision console.
   - timestamp
   - card click focuses related map point
 - Freeze-frame capture:
-  - short capture around detection event
-  - include timestamp + pose context
+  - snapshot at detection moment
+  - additional snapshot ~1–2s after detection
+  - extract via `canvas.toDataURL()` from `<img>` tag
+  - total 2 captures per detection event
 
 ### Additional Controls / Status
 - `TopBar` status:
   - battery percent from `/battery_state`
   - warning at `<= 20%`
   - latency in `ms`
-
-### History / Patrol
-- `FilterBar`:
-  - date/time range filter
-  - confidence range filter
-  - class filter
-- `DetectionTable`:
-  - detection list view
-  - timestamp
-  - class
-  - confidence
-  - location
-- `DetailModal`:
-  - event detail view
-  - image comparison
-  - map/time context
-- `Auto Patrol`:
-  - waypoint-based patrol integration
-  - aligned with drive mode state
-  - manual override + E-stop must still win
-
-### Phase 2 Deliverables
-- Alarm feedback
-- Inverted visual mode
-- Minimap + waypoint interaction
-- Alert feed
-- Freeze-frame capture
-- Battery + latency status
-- History workflow
-- Auto patrol integration
-
-## Implementation Notes
-- Use `src/lib/rosClient.ts` for ROS only
-- Use `src/hooks/useAIStream.ts` for AI WebSocket only
-- Keep threshold as immediate global runtime state
-- When detection becomes `"none"`, clear bbox only
-- E-stop must publish immediately and take priority
-- Do not break Settings persistence / hydration
+- **Phase 2**: False Positive reporting on Alert Cards
+  - user can report detections as false positives
