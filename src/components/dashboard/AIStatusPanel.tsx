@@ -2,6 +2,7 @@ import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import StatusIndicator from "../ui/StatusIndicator";
+import useRobotStore from "../../store/robotStore";
 
 interface StatusCellProps {
   label: string;
@@ -10,14 +11,14 @@ interface StatusCellProps {
 }
 
 function getFrameDelayTone(frameDelayMs: number): string {
-  if (frameDelayMs <= 60) return "text-mission-active";
-  if (frameDelayMs <= 120) return "text-mission-suspicious";
+  if (frameDelayMs <= 200) return "text-mission-active";
+  if (frameDelayMs <= 500) return "text-mission-suspicious";
   return "text-mission-critical";
 }
 
 function getFrameDelayBadgeTone(frameDelayMs: number): "success" | "warning" | "danger" {
-  if (frameDelayMs <= 60) return "success";
-  if (frameDelayMs <= 120) return "warning";
+  if (frameDelayMs <= 200) return "success";
+  if (frameDelayMs <= 500) return "warning";
   return "danger";
 }
 
@@ -31,9 +32,15 @@ function StatusCell({ label, value, valueClass = "text-mission-text" }: StatusCe
 }
 
 export default function AIStatusPanel() {
-  const frameDelayMs = 48;
+  const detection = useRobotStore((s) => s.detection);
+  const driveMode = useRobotStore((s) => s.driveMode);
+
+  const frameDelayMs = detection.frameDelayMs;
   const frameDelayToneClass = getFrameDelayTone(frameDelayMs);
   const frameDelayBadgeTone = getFrameDelayBadgeTone(frameDelayMs);
+
+  const confidenceTone =
+    detection.confidence >= 80 ? "success" : detection.confidence >= 50 ? "warning" : "danger";
 
   return (
     <MissionPanel
@@ -49,22 +56,43 @@ export default function AIStatusPanel() {
     >
       <div className="grid grid-cols-6 divide-x divide-mission-border">
         {/* Last Detected */}
-        <StatusCell label="Last Detected" value="person" valueClass="text-mission-text" />
+        <StatusCell
+          label="Last Detected"
+          value={detection.class}
+          valueClass={detection.class === "person" ? "text-mission-critical" : "text-mission-text"}
+        />
 
         {/* Confidence */}
         <div className="flex min-h-[88px] flex-col items-center justify-center gap-2 px-3 py-3">
           <Typography variant="overline" className="tracking-[0.14em]">Confidence</Typography>
-          <StatusIndicator tone="success" label="98.5%" showDot={false} textVariant="metric" className="uppercase" />
+          <StatusIndicator
+            tone={confidenceTone}
+            label={`${detection.confidence.toFixed(1)}%`}
+            showDot={false}
+            textVariant="metric"
+            className="uppercase"
+          />
         </div>
 
         {/* Current Mode */}
-        <StatusCell label="Current Mode" value="Manual" valueClass="text-mission-info" />
+        <StatusCell
+          label="Current Mode"
+          value={driveMode === "auto" ? "Auto" : "Manual"}
+          valueClass={driveMode === "auto" ? "text-mission-active" : "text-mission-info"}
+        />
 
         {/* Frame Delay + FPS */}
         <div className="flex min-h-[88px] flex-col items-center justify-center gap-1 px-3 py-3">
           <Typography variant="overline" className="tracking-[0.14em]">Frame Delay</Typography>
-          <StatusIndicator tone={frameDelayBadgeTone} label={`${frameDelayMs}ms`} showDot={false} textVariant="metric" />
-          <Typography variant="monoStrong" className={`uppercase tracking-[0.12em] ${frameDelayToneClass}`}>FPS: 20.5</Typography>
+          <StatusIndicator
+            tone={frameDelayBadgeTone}
+            label={`${frameDelayMs}ms`}
+            showDot={false}
+            textVariant="metric"
+          />
+          <Typography variant="monoStrong" className={`uppercase tracking-[0.12em] ${frameDelayToneClass}`}>
+            FPS: {detection.fps.toFixed(1)}
+          </Typography>
         </div>
 
         {/* Freeze Frame */}
