@@ -2,7 +2,7 @@ import { useState } from "react";
 import AIOverlay from "../components/dashboard/AIOverlay";
 import AIStatusPanel from "../components/dashboard/AIStatusPanel";
 import AlertFeed from "../components/dashboard/AlertFeed";
-// import CriticalAlarmOverlay from "../components/dashboard/CriticalAlarmOverlay";
+import CriticalAlarmOverlay from "../components/dashboard/CriticalAlarmOverlay";
 import DriveController from "../components/dashboard/DriveController";
 import VideoStream from "../components/dashboard/VideoStream";
 import Typography from "../components/ui/Typography";
@@ -33,7 +33,7 @@ export default function Dashboard({ onCaptureReady }: DashboardProps) {
             onToggleInvert={() => setInverted((v) => !v)}
           />
           <AIOverlay />
-          {/* <CriticalAlarmOverlay /> */}
+          <CriticalAlarmOverlay />
         </div>
 
         {/* AI Detection Status Strip */}
