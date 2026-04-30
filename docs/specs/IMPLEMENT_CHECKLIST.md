@@ -1,225 +1,324 @@
 # 구현 점검 리스트 (Implementation Checklist)
 
-현재 구현 상태 기준으로 **실제 미구현 항목만** 정리합니다.  
-빌드는 통과하지만 ROS 통신 레이어가 전혀 없는 상태입니다.
+현재 워크트리 기준 코드 리뷰 결과입니다.
+
+- `npm run build`: 통과
+- `npx tsc -b`: 실패 (`src/main.tsx`의 `./index.css` side-effect import 타입 선언 누락)
+- ROS/AI/카메라 연동 코드는 일부 구현되었지만, 실제 운영 안정성 관점에서는 추가 수정이 필요합니다.
 
 ---
 
-## ✅ 이미 완료된 항목 (수정 불필요)
+## 현재 상태 요약
 
-| 파일 | 상태 |
-|------|------|
-| `useAIStream.ts` | AI WebSocket 완전 구현 (재연결, throttle, snapshot 캡처 포함) |
-| `robotStore.ts` | 모든 상태 및 setter 완전 구현 |
-| `settingsStore.ts` | localStorage 영속화 및 migration 완전 구현 |
-| `AIStatusPanel.tsx` | 실시간 detection 데이터 연결 완료 |
-| `AIOverlay.tsx` | bbox 동적 위치 계산 및 ResizeObserver 완료 |
-| `AlertFeed.tsx` | detectionLog 실시간 연결 완료 |
-| `CriticalAlarmOverlay.tsx` | confidence ≥ threshold 조건 로직 완료 |
-| `VideoStream.tsx` | spacebar 토글, freeze-frame 캡처 완료 |
-| `Dashboard.tsx` | 전체 레이아웃 및 컴포넌트 통합 완료 |
-| `DetailModal.tsx` | 이미지 비교, confidence donut, frame delay 기준 완료 |
-| `DiagnosticsMonitor.tsx` | robotStore 연결 상태 표시 완료 |
-| `ConnectionForm.tsx` | settingsStore 연결 및 저장 완료 |
-| `App.tsx` | useAIStream mount, capture callback 연결 완료 |
+| 영역 | 현재 상태 | 판정 |
+|------|----------|------|
+| AI WebSocket | `useAIStream` mount, 재연결, 3초 throttle, snapshot 캡처 구현 | 보완 필요 |
+| Camera stream | settings IP 기반 MJPEG URL, `cameraConnected` onLoad/onError 반영 | 보완 필요 |
+| ROS bridge | `useRosConnection` mount, reconnect, battery/pose subscribe 구현 | 보완 필요 |
+| Drive control | 공유 ROS 인스턴스 사용, `/cmd_vel` publish, E-stop 구현 | 보완 필요 |
+| Dashboard overlay | `object-cover` crop 기준 bbox 계산 구현 | 검증 필요 |
+| History | detectionLog 연결, confidence 0-100 반영 | 보완 필요 |
+| Settings | localStorage persistence, confidence migration 구현 | 대체로 완료 |
+| TopBar/Diagnostics | store 기반 상태 표시 일부 구현 | 보완 필요 |
+| MiniMap | placeholder | 미구현 |
 
 ---
 
-## 🔴 미구현 — ROS 통신 레이어
+## 완료로 볼 수 있는 항목
 
-### 1. roslibjs 패키지 설치
-**현재**: 미설치  
-**필요**:
-```bash
-npm install roslib
-npm install --save-dev @types/roslib
-```
-**이유**: 이하 모든 ROS 항목의 전제 조건
+| 파일 | 확인 내용 |
+|------|----------|
+| `App.tsx` | `useAIStream`, `useRosConnection` mount 완료 |
+| `settingsStore.ts` | `confidenceThreshold` 0-1 -> 0-100 migration 포함 |
+| `VideoStream.tsx` | `jetsonIp` 기반 stream URL, visual mode toggle, camera status 이벤트 연결 |
+| `useVideoCapture.ts` | CORS/canvas 실패 시 `undefined` 반환하도록 방어 |
+| `AIStatusPanel.tsx` | detection, driveMode, visual mode 표시 연결 |
+| `AlertFeed.tsx` | mock 제거, `detectionLog` 기반 카드 렌더링 |
+| `CriticalAlarmOverlay.tsx` | `person` + threshold 조건으로 표시 |
+| `DetectionTable.tsx` | confidence 0-100 표시 기준 반영 |
+| `DetailModal.tsx` | false positive 버튼, snapshot 비교, frame delay 기준 반영 |
 
 ---
 
-### 2. useRosConnection.ts — ROS Bridge 연결 구현
-**파일**: `src/hooks/useRosConnection.ts`  
-**현재**: 완전히 빈 stub (return () => {} 만 존재)  
-**필요**:
+## 🔴 High: 우선 수정 필요
 
-```typescript
-import ROSLIB from "roslib";
-import { useEffect, useRef } from "react";
-import useRobotStore from "../store/robotStore";
-import useSettingsStore from "../store/settingsStore";
+### 1. `DriveController.tsx` - `/cmd_vel` Topic을 매 클릭마다 생성
 
-export default function useRosConnection() {
-  const rosRef = useRef<ROSLIB.Ros | null>(null);
-  const { jetsonIp, rosbridgePort } = useSettingsStore.getState();
-  const { setConnectionStatus, setBattery, setPose } = useRobotStore.getState();
+**파일**: `src/components/dashboard/DriveController.tsx`
 
-  useEffect(() => {
-    const ros = new ROSLIB.Ros({
-      url: `ws://${jetsonIp}:${rosbridgePort}`,
-    });
-    rosRef.current = ros;
-
-    ros.on("connection", () => setConnectionStatus("rosConnected", true));
-    ros.on("error",      () => setConnectionStatus("rosConnected", false));
-    ros.on("close",      () => setConnectionStatus("rosConnected", false));
-
-    // /battery_state subscriber
-    const batterySub = new ROSLIB.Topic({
-      ros,
-      name: "/battery_state",
-      messageType: "sensor_msgs/BatteryState",
-    });
-    batterySub.subscribe((msg: any) => {
-      setBattery(Math.round(msg.percentage * 100));
-    });
-
-    // /amcl_pose subscriber
-    const poseSub = new ROSLIB.Topic({
-      ros,
-      name: "/amcl_pose",
-      messageType: "geometry_msgs/PoseWithCovarianceStamped",
-    });
-    poseSub.subscribe((msg: any) => {
-      const { x, y } = msg.pose.pose.position;
-      const { z, w } = msg.pose.pose.orientation;
-      setPose({ x, y, theta: 2 * Math.atan2(z, w) });
-    });
-
-    return () => {
-      batterySub.unsubscribe();
-      poseSub.unsubscribe();
-      ros.close();
-    };
-  }, [jetsonIp, rosbridgePort]);
-
-  return rosRef;
+**현재**
+```ts
+function publishCmdVel(lx: number, az: number): boolean {
+  const ros = getRos();
+  if (!ros) return false;
+  const topic = new ROSLIB.Topic({ ros, name: "/cmd_vel", messageType: "geometry_msgs/Twist" });
+  topic.publish(...);
+  return true;
 }
 ```
 
-**영향**: rosConnected 상태, 배터리, 로봇 위치 전부 미동작
+**문제**
+- 클릭마다 `ROSLIB.Topic`이 새로 생성됩니다.
+- 짧은 반복 입력에서 불필요한 객체 생성이 늘어납니다.
+- publish 실패 여부가 UI에 반영되지 않습니다.
+
+**권장**
+- `rosClient.ts` 또는 별도 ROS command helper에서 `/cmd_vel` topic을 캐시합니다.
+- `rosConnected === false`이면 버튼 disabled 또는 명확한 상태 표시를 추가합니다.
+- E-stop은 실패 여부를 사용자에게 알릴 수 있어야 합니다.
 
 ---
 
-### 3. App.tsx — useRosConnection mount 추가
-**파일**: `src/App.tsx`  
-**현재**: `useAIStream`만 mount, `useRosConnection`은 호출 안 됨  
-**필요**: 
-```typescript
-import useRosConnection from "./hooks/useRosConnection";
+### 2. `useRosConnection.ts` - reconnect마다 subscriber 중복 생성 가능
 
-// App 컴포넌트 내부에 추가
-useRosConnection();
+**파일**: `src/hooks/useRosConnection.ts`
+
+**현재**
+```ts
+ros.on("connection", () => {
+  const batterySub = new ROSLIB.Topic(...);
+  batterySub.subscribe(...);
+
+  const poseSub = new ROSLIB.Topic(...);
+  poseSub.subscribe(...);
+});
+```
+
+**문제**
+- subscriber가 `connection` callback 내부 지역 변수라 cleanup에서 직접 unsubscribe할 수 없습니다.
+- reconnect가 반복되면 이전 connection의 구독 정리가 명확하지 않습니다.
+
+**권장**
+```ts
+let batterySub: ROSLIB.Topic | null = null;
+let poseSub: ROSLIB.Topic | null = null;
+
+function unsubscribeAll() {
+  batterySub?.unsubscribe();
+  poseSub?.unsubscribe();
+  batterySub = null;
+  poseSub = null;
+}
+```
+
+- `close`, cleanup 전에 `unsubscribeAll()` 호출
+- 새 연결 전에 이전 `ros`와 subscriber 정리
+
+---
+
+### 3. `TopBar.tsx` - ping 상태가 실측값이 아님
+
+**파일**: `src/components/layout/TopBar.tsx`
+
+**현재**
+```ts
+const pingMs: number | null = fastapiConnected ? null : null;
+```
+
+**문제**
+- `getPingTone`은 있지만 실제 ping 값은 없습니다.
+- 화면에서 ping widget을 제거했거나 AI 상태로 대체한 상태라면 dead code가 남아 있습니다.
+
+**권장**
+- 선택 A: `getPingTone`과 `pingMs` 제거
+- 선택 B: `DiagnosticsMonitor`의 `/ping` fetch 시간을 측정해 store에 저장하고 TopBar에서 표시
+
+---
+
+### 4. TypeScript 빌드 실패
+
+**파일**: `src/main.tsx`
+
+**현재 오류**
+```txt
+src/main.tsx(4,8): error TS2882:
+Cannot find module or type declarations for side-effect import of './index.css'.
+```
+
+**권장**
+- `src/vite-env.d.ts` 또는 `src/global.d.ts` 추가
+
+```ts
+/// <reference types="vite/client" />
+```
+
+또는
+
+```ts
+declare module "*.css";
 ```
 
 ---
 
-### 4. DriveController.tsx — /cmd_vel publish 구현
-**파일**: `src/components/dashboard/DriveController.tsx`  
-**현재**: `handleDriveCommand`, `handleEStop` 모두 `console.log`만  
-**필요**:
+## 🟡 Medium: 기능/운영 품질 보완
 
-```typescript
-// useRosConnection에서 반환한 rosRef를 props 또는 context로 전달받거나
-// 별도 useCmdVel 훅으로 분리
+### 5. `AIOverlay.tsx` - bbox 좌표 계산은 수정됐지만 실제 화면 검증 필요
 
-const publishCmdVel = (linear: number, angular: number) => {
-  const cmdVel = new ROSLIB.Topic({
-    ros: rosRef.current!,
-    name: "/cmd_vel",
-    messageType: "geometry_msgs/Twist",
-  });
-  cmdVel.publish(new ROSLIB.Message({
-    linear:  { x: linear,  y: 0, z: 0 },
-    angular: { x: 0, y: 0, z: angular },
-  }));
-};
+**파일**: `src/components/dashboard/AIOverlay.tsx`
 
-// 방향별 매핑 (스펙 기준)
-// forward:  linear.x = 0.2, angular.z = 0
-// backward: linear.x = -0.2, angular.z = 0
-// left:     linear.x = 0,   angular.z = 0.5
-// right:    linear.x = 0,   angular.z = -0.5
-// E-stop:   linear.x = 0,   angular.z = 0 (즉시 한 번만 publish)
+**현재**
+- `object-cover` crop 기준으로 rendered rect 계산을 수정했습니다.
+- `ResizeObserver`로 컨테이너 크기를 추적합니다.
+
+**남은 리스크**
+- 서버 bbox 좌표계가 항상 `640x480`이라고 가정합니다.
+- 실제 stream 해상도가 다르면 bbox가 다시 어긋납니다.
+
+**권장**
+- AI WebSocket payload에 `frame_width`, `frame_height`를 포함시키거나 설정값으로 분리
+- 최소 16:9, 4:3, 좁은 화면에서 시각 검증
+
+---
+
+### 6. `useAIStream.ts` - `snapshotOriginal` 캡처 실패도 명시적으로 처리
+
+**파일**: `src/hooks/useAIStream.ts`, `src/hooks/useVideoCapture.ts`
+
+**현재**
+- `useVideoCapture`는 CORS/canvas 실패 시 `undefined`를 반환합니다.
+- `useAIStream`은 snapshot이 없어도 로그를 저장합니다.
+
+**권장**
+- 로그 항목에 `snapshotStatus?: "captured" | "unavailable"` 같은 상태를 추가하거나,
+- UI에서 `No Image`의 원인을 알 수 있게 표시합니다.
+
+---
+
+### 7. `DriveController.tsx` - `driveMode` 이중 상태
+
+**파일**: `src/components/dashboard/DriveController.tsx`
+
+**현재**
+```ts
+const { driveMode, setDriveMode, rosConnected } = useRobotStore();
+const [localMode, setLocalMode] = useState<DriveMode>(driveMode);
 ```
 
-**E-stop 우선순위**: 모드/방향 상관없이 즉시 zero-velocity publish
+**문제**
+- 외부에서 store의 `driveMode`가 변경되면 `localMode`가 따라가지 않습니다.
+
+**권장**
+- `localMode` 제거
+- store의 `driveMode`를 단일 source of truth로 사용
 
 ---
 
-## 🟡 추가 검토 항목
+### 8. `History.tsx` - demo 데이터와 실제 로그 정책 불일치
 
-### 6. DiagnosticsMonitor.tsx — FastAPI /ping 헬스체크
-**파일**: `src/components/settings/DiagnosticsMonitor.tsx`  
-**현재**: robotStore의 boolean 상태만 표시 (AI/ROS/Camera)  
-**필요**: FastAPI `GET /ping` 주기적 호출로 백엔드 연결 상태 별도 확인
+**파일**: `src/pages/History.tsx`
 
-```typescript
-useEffect(() => {
-  const check = async () => {
-    try {
-      const res = await fetch(`${fastapiUrl}/ping`, { signal: AbortSignal.timeout(3000) });
-      setConnectionStatus("fastapiConnected", res.ok);
-    } catch {
-      setConnectionStatus("fastapiConnected", false);
-    }
-  };
-  check();
-  const id = setInterval(check, 10_000);
-  return () => clearInterval(id);
-}, [fastapiUrl]);
+**현재**
+- demo에는 `class: "none"` 항목이 있습니다.
+- 실제 `useAIStream`은 `cls === "person"`일 때만 `pushDetectionLog` 합니다.
+
+**권장**
+- demo 데이터도 person-only로 맞추거나,
+- 실제 로그에도 threshold 미달/none 이벤트를 기록할 정책인지 결정합니다.
+
+---
+
+### 9. `DiagnosticsMonitor.tsx` - FastAPI `/ping` 경로 계약 확인 필요
+
+**파일**: `src/components/settings/DiagnosticsMonitor.tsx`
+
+**현재**
+```ts
+fetch(`${fastapiUrl}/ping`, { signal: AbortSignal.timeout(3000) })
 ```
 
-**참고**: `robotStore`에 `fastapiConnected` 필드 추가 필요
+**리스크**
+- 백엔드 health endpoint가 `/ping`이 아니면 항상 disconnected로 표시됩니다.
+
+**권장**
+- `docs/specs/API_DETAILS.md`에 health endpoint 명시
+- FastAPI 실제 endpoint와 맞추기 (`/ping`, `/health`, `/api/health` 중 하나)
 
 ---
 
-### 7. VideoStream.tsx — 스트림 URL을 settingsStore에서 읽기
-**파일**: `src/components/dashboard/VideoStream.tsx`  
-**현재**: `http://192.168.0.45:8080/stream` 하드코딩  
-**필요**: 
-```typescript
-const { jetsonIp } = useSettingsStore();
-const streamUrl = `http://${jetsonIp}:8080/stream?topic=/cv_camera/image_raw`;
-```
-**이유**: ConnectionForm에서 IP를 바꿔도 스트림이 안 바뀜
+## 🟢 Low: 정리/문서화
+
+### 10. `rosClient.ts` - 역할 확장
+
+**현재**
+- ROS instance getter/setter만 제공합니다.
+
+**권장**
+- `/cmd_vel` topic 캐시
+- 연결 상태 helper
+- 향후 `/map`, `/amcl_pose` 관련 공통 유틸 위치로 사용
 
 ---
 
-### 8. useRosConnection.ts — jetsonIp/port 변경 시 재연결
-**파일**: `src/hooks/useRosConnection.ts`  
-**현재**: (아직 미구현이라 해당 없음)  
-**구현 시 주의**: ConnectionForm에서 IP 변경 → Save 후 ROS 재연결이 트리거되어야 함  
-settingsStore를 subscribe하거나 useEffect dependency에 포함
+### 11. 문서 단위 불일치 정리
+
+**파일**
+- `README.md`
+- `docs/AGENTS.md`
+- `docs/specs/API_DETAILS.md`
+
+**문제**
+- 일부 문서가 아직 `confidenceThreshold=0.5` 또는 0-1 기준을 언급합니다.
+- 현재 코드는 0-100 기준입니다.
+
+**권장**
+- 모든 문서에서 `confidence`, `confidenceThreshold`를 `0..100`으로 통일
 
 ---
 
-## 📊 우선순위 요약
+### 12. `MiniMap.tsx` 미구현
+
+**파일**: `src/components/dashboard/MiniMap.tsx`
+
+**현재**
+- `ros2djs map viewport` placeholder만 렌더링합니다.
+
+**권장**
+- Phase 3로 남기는 경우 명시
+- `/map`, `/amcl_pose` 구현 범위를 별도 티켓으로 분리
+
+---
+
+## 우선순위 요약
 
 | 우선순위 | 항목 | 파일 | 복잡도 |
 |---------|------|------|--------|
-| 🔴 즉시 | roslibjs 설치 | package.json | 낮음 |
-| 🔴 즉시 | useRosConnection 구현 | useRosConnection.ts | 중간 |
-| 🔴 즉시 | App.tsx에 mount 추가 | App.tsx | 낮음 |
-| 🔴 높음 | DriveController /cmd_vel publish | DriveController.tsx | 중간 |
-| 🟡 중간 | DiagnosticsMonitor FastAPI ping | DiagnosticsMonitor.tsx | 낮음 |
-| 🟡 중간 | VideoStream URL 동적 처리 | VideoStream.tsx | 낮음 |
+| 🔴 High | `/cmd_vel` topic 캐시 및 publish 실패 처리 | `DriveController.tsx`, `rosClient.ts` | 중간 |
+| 🔴 High | ROS subscriber cleanup/reconnect 안정화 | `useRosConnection.ts` | 중간 |
+| 🔴 High | TypeScript CSS import 선언 추가 | `src/vite-env.d.ts` 등 | 낮음 |
+| 🔴 High | TopBar ping dead code 정리 또는 실측 구현 | `TopBar.tsx` | 낮음-중간 |
+| 🟡 Medium | bbox 좌표 실제 화면 검증 및 frame size 일반화 | `AIOverlay.tsx` | 중간 |
+| 🟡 Medium | snapshot 실패 상태 표시 | `useAIStream.ts`, `DetailModal.tsx` | 낮음 |
+| 🟡 Medium | driveMode 단일 상태화 | `DriveController.tsx` | 낮음 |
+| 🟡 Medium | demo log 정책 정리 | `History.tsx` | 낮음 |
+| 🟢 Low | confidence 문서 단위 통일 | docs | 낮음 |
+| 🟢 Low | MiniMap Phase 분리 | `MiniMap.tsx`, docs | 중간 |
 
 ---
 
-## 📝 권장 작업 순서
+## 권장 작업 순서
 
-1. `npm install roslib @types/roslib`
-2. **useRosConnection 구현** → rosConnected, battery, pose 데이터 흐름 확보
-3. **App.tsx mount** → ROS 연결 시작
-4. **DriveController /cmd_vel** → 수동 제어 가능
-5. **VideoStream URL 동적화** → IP 변경 반영
-6. **DiagnosticsMonitor FastAPI ping** → 전체 상태 모니터링 완성
-7. **MiniMap** → Phase 3으로 이동 (MVP 범위 제외)
+1. TypeScript 실패 해결 (`vite-env.d.ts` 추가)
+2. ROS connection lifecycle 정리 (`useRosConnection`, `rosClient`)
+3. `/cmd_vel` publish path 안정화 (`DriveController`)
+4. TopBar 상태 표시 dead code 정리
+5. 실제 Jetson/rosbridge 환경에서 ROS, camera, AI stream smoke test
+6. bbox 좌표/캡처 결과를 desktop viewport에서 시각 검증
+7. README/AGENTS/API_DETAILS 문서의 confidence 단위 정리
 
 ---
 
-## 📌 참고 문서
+## 검증 체크리스트
 
-- `docs/specs/API_DETAILS.md` — ROS 토픽, 엔드포인트, 드라이브 속도값
-- `docs/AGENTS.md` — 전체 규칙 및 상태 계약
+- [ ] `npm run build`
+- [ ] `npx tsc -b`
+- [ ] rosbridge down 상태에서 `rosConnected=false`
+- [ ] rosbridge up 후 자동 재연결 및 `rosConnected=true`
+- [ ] `/battery_state` 수신 시 TopBar battery 반영
+- [ ] `/amcl_pose` 수신 시 store pose 반영
+- [ ] manual forward/back/left/right가 `/cmd_vel` 1회 publish
+- [ ] E-stop이 연결 상태에서 zero velocity publish
+- [ ] AI stream disconnect 후 3초 재연결
+- [ ] detection log가 3초 throttle로 쌓임
+- [ ] snapshot CORS 실패 시 UI가 깨지지 않음
+- [ ] bbox가 실제 영상 위 탐지 위치와 일치
+
