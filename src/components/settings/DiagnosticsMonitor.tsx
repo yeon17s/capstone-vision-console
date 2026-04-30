@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import Typography from "../ui/Typography";
 import MissionPanel, { MissionCard } from "../ui/MissionPanel";
 import StatusIndicator from "../ui/StatusIndicator";
 import useRobotStore from "../../store/robotStore";
+import useSettingsStore from "../../store/settingsStore";
 
 type DiagStatus = "active" | "warning" | "error" | "unknown";
 
@@ -20,19 +22,40 @@ const DOT_TONE: Record<DiagStatus, "success" | "warning" | "danger" | "muted"> =
 
 function connStatus(connected: boolean): { status: DiagStatus; detail: string } {
   return connected
-    ? { status: "active",  detail: "Connected" }
-    : { status: "error",   detail: "Disconnected" };
+    ? { status: "active", detail: "Connected" }
+    : { status: "error",  detail: "Disconnected" };
 }
 
 export default function DiagnosticsMonitor() {
   const rosConnected    = useRobotStore((s) => s.rosConnected);
   const aiConnected     = useRobotStore((s) => s.aiConnected);
   const cameraConnected = useRobotStore((s) => s.cameraConnected);
+  const fastapiConnected = useRobotStore((s) => s.fastapiConnected);
+  const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
+  const fastapiUrl = useSettingsStore((s) => s.fastapiUrl);
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await fetch(`${fastapiUrl}/ping`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        setConnectionStatus("fastapiConnected", res.ok);
+      } catch {
+        setConnectionStatus("fastapiConnected", false);
+      }
+    };
+
+    check();
+    const id = setInterval(check, 10_000);
+    return () => clearInterval(id);
+  }, [fastapiUrl, setConnectionStatus]);
 
   const items: DiagItem[] = [
-    { label: "ROS Bridge",      ...connStatus(rosConnected) },
-    { label: "AI Stream",       ...connStatus(aiConnected) },
-    { label: "Camera",          ...connStatus(cameraConnected) },
+    { label: "ROS Bridge", ...connStatus(rosConnected) },
+    { label: "AI Stream",  ...connStatus(aiConnected) },
+    { label: "Camera",     ...connStatus(cameraConnected) },
+    { label: "Backend",    ...connStatus(fastapiConnected) },
   ];
 
   return (

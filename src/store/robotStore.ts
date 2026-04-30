@@ -30,12 +30,13 @@ export interface DetectionLogEntry extends Detection {
   snapshotInverted?: string;  // data URL, captured 1–2s after detection
 }
 
-type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected";
+type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected" | "fastapiConnected";
 
 interface RobotState {
   rosConnected: boolean;
   aiConnected: boolean;
   cameraConnected: boolean;
+  fastapiConnected: boolean;
   driveMode: DriveMode;
   batteryPercent: number;
   pose: Pose;
@@ -63,6 +64,7 @@ const useRobotStore = create<RobotState>((set) => ({
   rosConnected: false,
   aiConnected: false,
   cameraConnected: false,
+  fastapiConnected: false,
   driveMode: "manual",
   batteryPercent: 0,
   pose: { x: 0, y: 0, yaw: 0 },

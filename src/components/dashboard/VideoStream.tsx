@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Typography from "../ui/Typography";
+import useSettingsStore from "../../store/settingsStore";
 
 interface VideoStreamProps {
   imgRef: React.RefObject<HTMLImageElement | null>;
@@ -8,7 +9,8 @@ interface VideoStreamProps {
 }
 
 export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoStreamProps) {
-  const streamUrl = "http://192.168.0.45:8080/stream?topic=/cv_camera/image_raw";
+  const jetsonIp = useSettingsStore((s) => s.jetsonIp);
+  const streamUrl = `http://${jetsonIp}:8080/stream?topic=/cv_camera/image_raw`;
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
