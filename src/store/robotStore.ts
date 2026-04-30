@@ -17,7 +17,7 @@ export interface Pose {
 
 export interface Detection {
   class: string;
-  confidence: number;  // 0–1
+  confidence: number;  // 0–100 (percent scale)
   bbox: BBox;
   fps: number;
   frameDelayMs: number;

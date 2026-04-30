@@ -21,7 +21,7 @@ const defaultSettings: SettingsData = {
   jetsonIp: "192.168.0.45",
   rosbridgePort: 9090,
   fastapiUrl: "http://121.156.245.81:8000",
-  confidenceThreshold: 0.5,
+  confidenceThreshold: 50,  // 0–100 range, matches robotStore.detection.confidence
   audioAlarmEnabled: true,
   volume: 70,
   storagePolicy: "original",
