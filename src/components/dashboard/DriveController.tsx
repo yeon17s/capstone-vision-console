@@ -1,10 +1,9 @@
-import { useCallback, useState } from "react";
-import * as ROSLIB from "roslib";
+import { useCallback } from "react";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import useRobotStore from "../../store/robotStore";
-import useSettingsStore from "../../store/settingsStore";
+import { publishCmdVel } from "../../lib/rosClient";
 
 type DriveMode = "manual" | "auto";
 
@@ -18,47 +17,28 @@ const DRIVE_VECTORS: Record<"forward" | "backward" | "left" | "right", { lx: num
   right:    { lx: 0, az: -ANGULAR_SPEED },
 };
 
-function makeCmdVelTopic(ros: ROSLIB.Ros) {
-  return new ROSLIB.Topic({
-    ros,
-    name: "/cmd_vel",
-    messageType: "geometry_msgs/Twist",
-  });
-}
-
-function publishVelocity(ros: ROSLIB.Ros, lx: number, az: number) {
-  const topic = makeCmdVelTopic(ros);
-  topic.publish({ linear: { x: lx, y: 0, z: 0 }, angular: { x: 0, y: 0, z: az } } as any);
-}
-
-function createRos() {
-  const { jetsonIp, rosbridgePort } = useSettingsStore.getState();
-  return new ROSLIB.Ros({ url: `ws://${jetsonIp}:${rosbridgePort}` });
-}
-
 export default function DriveController() {
-  const { driveMode, setDriveMode, rosConnected } = useRobotStore();
-  const [localMode, setLocalMode] = useState<DriveMode>(driveMode);
+  const driveMode    = useRobotStore((s) => s.driveMode);
+  const setDriveMode = useRobotStore((s) => s.setDriveMode);
+  const rosConnected = useRobotStore((s) => s.rosConnected);
 
-  const handleModeChange = (mode: DriveMode) => {
-    setLocalMode(mode);
-    setDriveMode(mode);
-  };
+  const handleModeChange = (mode: DriveMode) => setDriveMode(mode);
 
   const handleDriveCommand = useCallback(
     (direction: "forward" | "backward" | "left" | "right") => {
       if (!rosConnected) return;
       const { lx, az } = DRIVE_VECTORS[direction];
-      const ros = createRos();
-      publishVelocity(ros, lx, az);
+      publishCmdVel(lx, az);
     },
     [rosConnected]
   );
 
+  // E-stop은 rosConnected 여부와 관계없이 항상 즉시 시도
   const handleEStop = useCallback(() => {
-    const ros = createRos();
-    publishVelocity(ros, 0, 0);
+    publishCmdVel(0, 0);
   }, []);
+
+  const driveDisabled = !rosConnected;
 
   return (
     <MissionPanel title="Robot Drive" bodyClassName="p-5" borderTone="mvp">
@@ -77,6 +57,7 @@ export default function DriveController() {
                 variant="icon"
                 size="icon"
                 onClick={() => handleDriveCommand("forward")}
+                disabled={driveDisabled}
                 className="absolute left-1/2 top-0 -translate-x-1/2 h-14 w-14"
               >
                 <Typography as="span" variant="metric">↑</Typography>
@@ -87,6 +68,7 @@ export default function DriveController() {
                 variant="icon"
                 size="icon"
                 onClick={() => handleDriveCommand("backward")}
+                disabled={driveDisabled}
                 className="absolute bottom-0 left-1/2 -translate-x-1/2 h-14 w-14"
               >
                 <Typography as="span" variant="metric">↓</Typography>
@@ -97,6 +79,7 @@ export default function DriveController() {
                 variant="icon"
                 size="icon"
                 onClick={() => handleDriveCommand("left")}
+                disabled={driveDisabled}
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-14 w-14"
               >
                 <Typography as="span" variant="metric">←</Typography>
@@ -107,6 +90,7 @@ export default function DriveController() {
                 variant="icon"
                 size="icon"
                 onClick={() => handleDriveCommand("right")}
+                disabled={driveDisabled}
                 className="absolute right-0 top-1/2 -translate-y-1/2 h-14 w-14"
               >
                 <Typography as="span" variant="metric">→</Typography>
@@ -120,22 +104,17 @@ export default function DriveController() {
           {/* Drive Mode Toggle */}
           <div className="grid grid-cols-2 gap-2">
             <Button
-              variant={localMode === "auto" ? "panel" : "panel"}
+              variant="panel"
               size="md"
-              className={`py-3 ${localMode === "auto" ? "border border-mission-border" : ""}`}
+              className={`py-3 ${driveMode === "auto" ? "border border-mission-border" : ""}`}
               onClick={() => handleModeChange("auto")}
             >
-              <Typography
-                as="span"
-                variant="controlStrong"
-                tone={localMode === "auto" ? undefined : undefined}
-                className="tracking-[0.12em]"
-              >
+              <Typography as="span" variant="controlStrong" className="tracking-[0.12em]">
                 Auto<br />Patrol
               </Typography>
             </Button>
             <Button
-              variant={localMode === "manual" ? "primary" : "panel"}
+              variant={driveMode === "manual" ? "primary" : "panel"}
               size="md"
               className="py-3"
               onClick={() => handleModeChange("manual")}
@@ -143,7 +122,7 @@ export default function DriveController() {
               <Typography
                 as="span"
                 variant="controlStrong"
-                tone={localMode === "manual" ? "inverse" : undefined}
+                tone={driveMode === "manual" ? "inverse" : undefined}
                 className="tracking-[0.12em]"
               >
                 Manual<br />Mode

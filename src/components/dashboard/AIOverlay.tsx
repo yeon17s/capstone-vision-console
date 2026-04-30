@@ -13,16 +13,18 @@ interface RenderedRect {
   height: number;
 }
 
+// object-cover: 비율 유지하며 컨테이너를 꽉 채움 → 이미지가 crop됨
+// 렌더된 이미지 크기는 컨테이너보다 크고, 오프셋은 음수(중앙 정렬로 crop)
 function getRenderedRect(containerW: number, containerH: number): RenderedRect {
   const containerRatio = containerW / containerH;
   if (containerRatio > SRC_RATIO) {
-    // pillarbox: image fills height, cropped horizontally
-    const renderedW = containerH * SRC_RATIO;
-    return { left: (containerW - renderedW) / 2, top: 0, width: renderedW, height: containerH };
-  } else {
-    // letterbox: image fills width, cropped vertically
+    // 컨테이너가 더 넓음 → 가로로 꽉 채우고 세로가 crop됨
     const renderedH = containerW / SRC_RATIO;
     return { left: 0, top: (containerH - renderedH) / 2, width: containerW, height: renderedH };
+  } else {
+    // 컨테이너가 더 좁음 → 세로로 꽉 채우고 가로가 crop됨
+    const renderedW = containerH * SRC_RATIO;
+    return { left: (containerW - renderedW) / 2, top: 0, width: renderedW, height: containerH };
   }
 }
 
