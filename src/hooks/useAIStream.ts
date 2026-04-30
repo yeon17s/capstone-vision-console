@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import useRobotStore from "../store/robotStore";
 import useSettingsStore from "../store/settingsStore";
 
+const LOG_THROTTLE_MS = 3000; // minimum ms between detection log entries
+
 interface UseAIStreamOptions {
   capture?: (inverted: boolean) => string | undefined;
 }
@@ -9,6 +11,8 @@ interface UseAIStreamOptions {
 function useAIStream({ capture }: UseAIStreamOptions = {}): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const invertedSnapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLoggedAtRef = useRef<number>(0);
   const captureRef = useRef(capture);
   captureRef.current = capture;
 
@@ -56,12 +60,25 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
           setDetection(detection);
 
           if (cls === "person") {
+            const now = Date.now();
+            if (now - lastLoggedAtRef.current < LOG_THROTTLE_MS) return;
+            lastLoggedAtRef.current = now;
+
             const snapshotOriginal = captureRef.current?.(false);
 
-            // capture inverted snapshot ~1.5s after detection
-            setTimeout(() => {
+            // cancel any pending inverted capture from previous log
+            if (invertedSnapshotTimerRef.current) {
+              clearTimeout(invertedSnapshotTimerRef.current);
+            }
+
+            invertedSnapshotTimerRef.current = setTimeout(() => {
               if (!isMounted) return;
-              const snapshotInverted = captureRef.current?.(true);
+              let snapshotInverted: string | undefined;
+              try {
+                snapshotInverted = captureRef.current?.(true);
+              } catch {
+                snapshotInverted = undefined;
+              }
               pushDetectionLog({
                 ...detection,
                 timestamp: data.timestamp,
@@ -93,6 +110,7 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
     return () => {
       isMounted = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      if (invertedSnapshotTimerRef.current) clearTimeout(invertedSnapshotTimerRef.current);
       wsRef.current?.close();
     };
   }, [jetsonIp, setDetection, setConnectionStatus, pushDetectionLog]);

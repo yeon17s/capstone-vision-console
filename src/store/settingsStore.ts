@@ -27,13 +27,25 @@ const defaultSettings: SettingsData = {
   storagePolicy: "original",
 };
 
+function migrateSettings(raw: Partial<SettingsData>): Partial<SettingsData> {
+  const migrated = { ...raw };
+  // confidenceThreshold was stored as 0–1 before migration to 0–100
+  if (
+    typeof migrated.confidenceThreshold === "number" &&
+    migrated.confidenceThreshold <= 1
+  ) {
+    migrated.confidenceThreshold = Math.round(migrated.confidenceThreshold * 100);
+  }
+  return migrated;
+}
+
 function loadSettings(): SettingsData {
   if (typeof window === "undefined") return defaultSettings;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored
-      ? { ...defaultSettings, ...(JSON.parse(stored) as Partial<SettingsData>) }
-      : defaultSettings;
+    if (!stored) return defaultSettings;
+    const parsed = migrateSettings(JSON.parse(stored) as Partial<SettingsData>);
+    return { ...defaultSettings, ...parsed };
   } catch {
     return defaultSettings;
   }

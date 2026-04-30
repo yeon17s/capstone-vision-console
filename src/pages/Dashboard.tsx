@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AIOverlay from "../components/dashboard/AIOverlay";
 import AIStatusPanel from "../components/dashboard/AIStatusPanel";
 import AlertFeed from "../components/dashboard/AlertFeed";
@@ -16,8 +16,11 @@ export default function Dashboard({ onCaptureReady }: DashboardProps) {
   const [inverted, setInverted] = useState(false);
   const { imgRef, capture } = useVideoCapture();
 
-  // expose capture fn to parent (App) on first render
-  if (onCaptureReady) onCaptureReady(capture);
+  useEffect(() => {
+    return onCaptureReady?.(capture);
+  // capture identity is stable (useCallback with no deps)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onCaptureReady]);
 
   return (
     <main className="grid min-h-0 flex-1 grid-cols-[1.88fr_0.92fr] gap-0 overflow-hidden">

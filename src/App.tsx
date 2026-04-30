@@ -14,6 +14,7 @@ export default function App() {
 
   const handleCaptureReady = useCallback((fn: (inverted: boolean) => string | undefined) => {
     captureRef.current = fn;
+    return () => { captureRef.current = undefined; };
   }, []);
 
   useAIStream({ capture: (inverted) => captureRef.current?.(inverted) });
