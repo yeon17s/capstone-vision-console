@@ -8,22 +8,20 @@ export default function AIConfig() {
   const { confidenceThreshold, audioAlarmEnabled, volume, updateSettings } =
     useSettingsStore();
 
-  const thresholdPct = Math.round(confidenceThreshold * 100);
-
   return (
     <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4" borderTone="mvp">
       {/* Confidence Threshold */}
       <RangeField
         className="mb-5"
         label="Confidence Threshold"
-        value={thresholdPct}
-        valueLabel={`${thresholdPct}%`}
+        value={confidenceThreshold}
+        valueLabel={`${confidenceThreshold}%`}
         min={0}
         max={100}
         onChange={(e) =>
-          updateSettings({ confidenceThreshold: Number(e.target.value) / 100 })
+          updateSettings({ confidenceThreshold: Number(e.target.value) })
         }
-        description={`Current threshold: ${thresholdPct}%`}
+        description={`Current threshold: ${confidenceThreshold}%`}
       />
 
       {/* Audio Alarm */}

@@ -12,14 +12,14 @@ interface DetectionTableProps {
 }
 
 function confColor(conf: number): string {
-  if (conf >= 0.85) return "text-mission-secondary";
-  if (conf >= 0.70) return "text-mission-suspicious";
+  if (conf >= 85) return "text-mission-secondary";
+  if (conf >= 70) return "text-mission-suspicious";
   return "text-mission-text/60";
 }
 
 function confTone(conf: number): "success" | "warning" | "muted" {
-  if (conf >= 0.85) return "success";
-  if (conf >= 0.70) return "warning";
+  if (conf >= 85) return "success";
+  if (conf >= 70) return "warning";
   return "muted";
 }
 
@@ -75,7 +75,7 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                     <td className="px-4 py-2">
                       <StatusIndicator
                         tone={confTone(row.confidence)}
-                        label={(row.confidence * 100).toFixed(1) + "%"}
+                        label={row.confidence.toFixed(1) + "%"}
                         showDot={false}
                         textVariant="monoStrong"
                         className={confColor(row.confidence)}

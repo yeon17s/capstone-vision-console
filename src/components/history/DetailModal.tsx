@@ -73,7 +73,7 @@ const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warnin
   FalsePositive: { label: "False Positive", tone: "muted" },
 };
 
-export default function DetailModal({ entry, status }: DetailModalProps) {
+export default function DetailModal({ entry, status, onMarkFalsePositive }: DetailModalProps) {
   if (!entry) {
     return (
       <MissionPanel className="h-full" bodyClassName="flex h-full items-center justify-center py-6">
@@ -95,7 +95,7 @@ export default function DetailModal({ entry, status }: DetailModalProps) {
             {statusLabel}
           </StatusBadge>
           {!isFalsePositive && (
-            <Button variant="dangerOutline" size="sm" className="px-2 py-0.5">
+            <Button variant="dangerOutline" size="sm" className="px-2 py-0.5" onClick={onMarkFalsePositive}>
               <Typography as="span" variant="overline" tone="danger" className="font-bold">False Positive</Typography>
             </Button>
           )}
