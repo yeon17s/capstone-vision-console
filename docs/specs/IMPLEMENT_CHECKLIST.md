@@ -147,22 +147,6 @@ const publishCmdVel = (linear: number, angular: number) => {
 
 ---
 
-### 5. MiniMap.tsx — ROS /map + /amcl_pose 연결
-**파일**: `src/components/dashboard/MiniMap.tsx`  
-**현재**: 텍스트 placeholder만 표시  
-**필요**:
-- `/map` 토픽 (`nav_msgs/OccupancyGrid`) subscribe → Canvas에 occupancy grid 렌더링
-- `/amcl_pose` 위치를 map 좌표계에서 픽셀 좌표로 변환하여 로봇 마커 표시
-- detection 이벤트 시 마커 추가 (선택, MVP 이후 가능)
-
-**구현 방식 옵션**:
-- `ros2djs` 라이브러리 사용 (CDN 또는 npm)
-- 또는 Canvas API로 직접 렌더링 (`OccupancyGrid.data` 배열 → ImageData)
-
-**주의**: `/map` 메시지는 수백 KB 이상일 수 있어 subscribe 빈도 조절 필요 (throttle)
-
----
-
 ## 🟡 추가 검토 항목
 
 ### 6. DiagnosticsMonitor.tsx — FastAPI /ping 헬스체크
@@ -218,7 +202,6 @@ settingsStore를 subscribe하거나 useEffect dependency에 포함
 | 🔴 즉시 | useRosConnection 구현 | useRosConnection.ts | 중간 |
 | 🔴 즉시 | App.tsx에 mount 추가 | App.tsx | 낮음 |
 | 🔴 높음 | DriveController /cmd_vel publish | DriveController.tsx | 중간 |
-| 🟡 중간 | MiniMap ROS 연결 | MiniMap.tsx | 높음 |
 | 🟡 중간 | DiagnosticsMonitor FastAPI ping | DiagnosticsMonitor.tsx | 낮음 |
 | 🟡 중간 | VideoStream URL 동적 처리 | VideoStream.tsx | 낮음 |
 
@@ -232,7 +215,7 @@ settingsStore를 subscribe하거나 useEffect dependency에 포함
 4. **DriveController /cmd_vel** → 수동 제어 가능
 5. **VideoStream URL 동적화** → IP 변경 반영
 6. **DiagnosticsMonitor FastAPI ping** → 전체 상태 모니터링 완성
-7. **MiniMap** → 지도 시각화 (가장 복잡, 마지막 구현)
+7. **MiniMap** → Phase 3으로 이동 (MVP 범위 제외)
 
 ---
 

@@ -73,8 +73,8 @@ Staged implementation scope for the capstone vision console.
 - `VideoStream` visual mode:
   - spacebar toggle
   - frontend-only `filter: invert(1)`
-- `MiniMap`:
-  - `/map`
+- `MiniMap`: **(Phase 3 — 제외됨)**
+  - `/map` occupancy grid 렌더링
   - robot pose / heading from `/amcl_pose`
   - waypoint targets
   - detection markers

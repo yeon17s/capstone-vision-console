@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import Typography from "../ui/Typography";
 import useSettingsStore from "../../store/settingsStore";
+import useRobotStore from "../../store/robotStore";
 
 interface VideoStreamProps {
   imgRef: React.RefObject<HTMLImageElement | null>;
@@ -11,6 +12,7 @@ interface VideoStreamProps {
 export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoStreamProps) {
   const jetsonIp = useSettingsStore((s) => s.jetsonIp);
   const streamUrl = `http://${jetsonIp}:8080/stream?topic=/cv_camera/image_raw`;
+  const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -34,6 +36,8 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
         crossOrigin="anonymous"
         className="absolute inset-0 h-full w-full object-cover transition-[filter] duration-150"
         style={inverted ? { filter: "invert(1) hue-rotate(180deg)" } : undefined}
+        onLoad={() => setConnectionStatus("cameraConnected", true)}
+        onError={() => setConnectionStatus("cameraConnected", false)}
       />
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-start justify-between">
