@@ -1,313 +1,322 @@
 # 구현 점검 리스트 (Implementation Checklist)
 
-현재 워크트리 기준 코드 리뷰 결과입니다.
+> 기준일: 2026-05-13  
+> 현재 워크트리 기준 주요 구현 리스크와 남은 작업을 정리한다.  
+> 이 문서는 우선 `IMPLEMENT_CHECKLIST.md` 한 파일 안에서 관리하며, 이후 `PHASE2_PLAN.md` / `UI_GAPS.md`로 분리할 수 있다.
 
-- `npm run build`: 통과
-- `npx tsc -b`: 실패 (`src/main.tsx`의 `./index.css` side-effect import 타입 선언 누락)
-- ROS/AI/카메라 연동 코드는 일부 구현되었지만, 실제 운영 안정성 관점에서는 추가 수정이 필요합니다.
+## 현재 검증 상태
 
----
+| 명령 | 결과 | 메모 |
+|------|------|------|
+| `npm run build` | 통과 | Vite production build 성공 |
+| `npx tsc -b` | 통과 | `src/vite-env.d.ts` 존재, CSS side-effect import 문제 해결됨 |
 
 ## 현재 상태 요약
 
 | 영역 | 현재 상태 | 판정 |
 |------|----------|------|
-| AI WebSocket | `useAIStream` mount, 재연결, 3초 throttle, snapshot 캡처 구현 | 보완 필요 |
-| Camera stream | settings IP 기반 MJPEG URL, `cameraConnected` onLoad/onError 반영 | 보완 필요 |
-| ROS bridge | `useRosConnection` mount, reconnect, battery/pose subscribe 구현 | 보완 필요 |
-| Drive control | 공유 ROS 인스턴스 사용, `/cmd_vel` publish, E-stop 구현 | 보완 필요 |
-| Dashboard overlay | `object-cover` crop 기준 bbox 계산 구현 | 검증 필요 |
+| AI WebSocket | `useAIStream` mount, reconnect, 3초 throttle, 2회 snapshot capture 구현 | 보완 필요 |
+| Camera stream | settings IP 기반 MJPEG URL, `cameraConnected` onLoad/onError 반영 | 검증 필요 |
+| ROS bridge | `useRosConnection` mount, reconnect, battery/pose subscribe, cleanup 구현 | 대체로 완료 |
+| Drive control | 공유 ROS 인스턴스 사용, `/cmd_vel` topic cache, manual drive, E-stop 구현 | 보완 필요 |
+| Dashboard overlay | `object-cover` crop 기준 bbox 계산 구현 | 실환경 검증 필요 |
 | History | detectionLog 연결, confidence 0-100 반영 | 보완 필요 |
-| Settings | localStorage persistence, confidence migration 구현 | 대체로 완료 |
-| TopBar/Diagnostics | store 기반 상태 표시 일부 구현 | 보완 필요 |
-| MiniMap | placeholder | 미구현 |
+| Settings | localStorage persistence, confidence migration 구현 | 보완 필요 |
+| TopBar/Diagnostics | ROS/FastAPI/Camera/AI/Battery 상태 표시 구현 | ping/경고 보완 필요 |
+| MiniMap | placeholder | Phase 3 보류 |
+
+
+## High: 우선 수정 필요
+
+### 1. `StorageSettings`의 storage policy가 실제 캡처 동작에 반영되지 않음
+
+**파일**: `src/components/settings/StorageSettings.tsx`, `src/hooks/useAIStream.ts`
+
+**현재**
+- `settingsStore.storagePolicy`는 `"original"` 또는 `"original+inverted"`로 저장된다.
+- `useAIStream`은 정책과 무관하게 항상 `snapshotOriginal`과 `snapshotInverted`를 캡처한다.
+
+**문제**
+- 사용자가 "original only"를 선택해도 1.5초 후 추가 캡처가 실행된다.
+- 설정 UI와 실제 저장 정책이 다르다.
+
+**권장**
+- `useAIStream`에서 `storagePolicy`를 읽는다.
+- `storagePolicy === "original"`이면 delayed snapshot timer를 만들지 않는다.
+- `storagePolicy === "original+inverted"`일 때만 1.5초 후 두 번째 캡처를 수행한다.
+
+**완료 조건**
+- [ ] `storagePolicy === "original"`일 때 `snapshotInverted`가 저장되지 않음
+- [ ] `storagePolicy === "original+inverted"`일 때 delayed snapshot이 저장됨
+- [ ] 정책 변경 후 새 detection log부터 즉시 반영됨
 
 ---
 
-## 완료로 볼 수 있는 항목
+### 2. 오디오 알람 설정이 `CriticalAlarmOverlay`와 연결되지 않음
 
-| 파일 | 확인 내용 |
-|------|----------|
-| `App.tsx` | `useAIStream`, `useRosConnection` mount 완료 |
-| `settingsStore.ts` | `confidenceThreshold` 0-1 -> 0-100 migration 포함 |
-| `VideoStream.tsx` | `jetsonIp` 기반 stream URL, visual mode toggle, camera status 이벤트 연결 |
-| `useVideoCapture.ts` | CORS/canvas 실패 시 `undefined` 반환하도록 방어 |
-| `AIStatusPanel.tsx` | detection, driveMode, visual mode 표시 연결 |
-| `AlertFeed.tsx` | mock 제거, `detectionLog` 기반 카드 렌더링 |
-| `CriticalAlarmOverlay.tsx` | `person` + threshold 조건으로 표시 |
-| `DetectionTable.tsx` | confidence 0-100 표시 기준 반영 |
-| `DetailModal.tsx` | false positive 버튼, snapshot 비교, frame delay 기준 반영 |
+**파일**: `src/components/settings/AIConfig.tsx`, `src/components/dashboard/CriticalAlarmOverlay.tsx`
+
+**현재**
+- `audioAlarmEnabled`, `volume` 값은 settings store에 저장된다.
+- `CriticalAlarmOverlay`는 visual alarm만 표시하고 오디오 재생은 구현되어 있지 않다.
+
+**문제**
+- Settings의 오디오 알람 토글/볼륨이 실제 동작에 영향을 주지 않는다.
+- Phase 2 spec의 "audio alert if enabled" 조건을 충족하지 못한다.
+
+**권장**
+- `CriticalAlarmOverlay`에서 `audioAlarmEnabled`, `volume`을 읽는다.
+- `audioAlarmEnabled === true`이고 `person + threshold` 조건을 만족할 때만 알람을 재생한다.
+- `audio.volume = volume / 100`으로 반영한다.
+- 브라우저 autoplay 제한 때문에 최초 재생 실패 가능성을 UI에서 방어한다.
+
+**완료 조건**
+- [ ] alarm sound asset 위치 결정 (`public/sounds/alarm.mp3` 등)
+- [ ] detection 발생 시 오디오 알람 재생
+- [ ] detection 해제 시 오디오 정지 및 재생 위치 초기화
+- [ ] Settings의 toggle/volume 변경이 즉시 반영됨
 
 ---
 
-## 🔴 High: 우선 수정 필요
+### 3. `AIStatusPanel`의 FREEZE 버튼이 동작하지 않음
 
-### 1. `DriveController.tsx` - `/cmd_vel` Topic을 매 클릭마다 생성
+**파일**: `src/components/dashboard/AIStatusPanel.tsx`, `src/pages/Dashboard.tsx`
+
+**현재**
+- `FREEZE` 버튼이 렌더링되지만 `onClick`이 없다.
+
+**문제**
+- 화면상 주요 command처럼 보이지만 실제 동작하지 않는다.
+- 운영자가 버튼을 눌러도 피드백이 없어 기능 신뢰도가 떨어진다.
+
+**권장**
+- `AIStatusPanel`에 `onFreezeFrame` prop을 추가한다.
+- `Dashboard`에서 `useVideoCapture`의 `capture()`와 연결한다.
+- 캡처 결과는 overlay, modal, 또는 download action 중 하나로 명확히 보여준다.
+
+**완료 조건**
+- [ ] FREEZE 클릭 시 현재 프레임 캡처
+- [ ] 캡처 성공/실패 피드백 표시
+- [ ] CORS 실패 시 UI가 깨지지 않음
+
+---
+
+### 4. Settings의 destructive action 버튼들이 미연결 상태
+
+**파일**: `src/components/settings/StorageSettings.tsx`, `src/store/robotStore.ts`
+
+**현재**
+- "Clear Local Cache", "Delete Old Logs" 버튼이 UI에 있지만 실제 동작이 없다.
+- "720 MB", "> 30 Days" 같은 값도 placeholder다.
+
+**문제**
+- 사용자가 데이터 삭제가 된 것으로 오해할 수 있다.
+- 로그 저장 정책과 정리 기능의 신뢰도가 낮아진다.
+
+**권장**
+- 미구현 상태라면 버튼을 disabled 처리하고 "Not available" 상태를 표시한다.
+- 구현한다면 삭제 전 확인 다이얼로그를 둔다.
+- `clearDetectionLog()`와 30일 이전 로그 제거 helper를 store에 추가한다.
+
+**완료 조건**
+- [ ] Clear Local Cache가 detection log와 관련 localStorage 데이터를 정리
+- [ ] Delete Old Logs가 기준일 이전 로그만 제거
+- [ ] 삭제 전 확인 또는 undo 제공
+- [ ] placeholder 용량 표시 제거 또는 실측값으로 교체
+
+## Medium: 기능/운영 품질 보완
+
+### 5. `AlertFeed`가 raw BBox를 노출하고 pose/map location을 표시하지 않음
+
+**파일**: `src/components/dashboard/AlertFeed.tsx`, `src/store/robotStore.ts`, `src/hooks/useAIStream.ts`
+
+**현재**
+- Alert card에 `BBox: x, y / w x h` raw 숫자가 직접 표시된다.
+- detection 시점의 robot pose가 log에 저장되지 않는다.
+
+**권장**
+- `DetectionLogEntry`에 `pose?: Pose`를 추가한다.
+- `useAIStream`에서 log 생성 시 현재 pose snapshot을 함께 저장한다.
+- Alert card는 raw BBox 대신 `X / Y` 좌표를 우선 표시한다.
+- BBox는 필요하면 tooltip 또는 debug view로만 이동한다.
+
+**완료 조건**
+- [ ] detection log에 pose snapshot 저장
+- [ ] Alert card에 map location 표시
+- [ ] raw BBox 직접 노출 제거 또는 debug 처리
+
+---
+
+### 6. snapshot 실패 원인이 UI에 드러나지 않음
+
+**파일**: `src/hooks/useAIStream.ts`, `src/hooks/useVideoCapture.ts`, `src/components/history/DetailModal.tsx`
+
+**현재**
+- CORS/canvas 실패 시 `capture()`가 `undefined`를 반환한다.
+- UI에서는 단순히 이미지가 없는 상태로 보인다.
+
+**권장**
+- `DetectionLogEntry`에 `snapshotStatus?: "captured" | "unavailable"` 또는 `snapshotError?: string`을 추가한다.
+- `DetailModal`에서 "No Image" 대신 "Capture unavailable" 같은 원인성 메시지를 표시한다.
+- `snapshotInverted` 이름은 delayed capture 의미가 더 강하므로 `snapshotDelayed` rename을 검토한다.
+
+**완료 조건**
+- [ ] snapshot capture 성공/실패 상태 저장
+- [ ] Detail modal에서 실패 상태를 명확히 표시
+- [ ] 실제 Jetson stream에서 2회 캡처 검증
+
+---
+
+### 7. History filter 정책이 실제 로그 정책과 맞지 않음
+
+**파일**: `src/pages/History.tsx`, `src/components/history/FilterBar.tsx`
+
+**현재**
+- 실제 `useAIStream`은 `class === "person"`일 때만 detection log를 저장한다.
+- demo data와 filter에는 `"none"` 항목/옵션이 남아 있다.
+- `operator` filter는 값은 저장되지만 실제 필터링에 사용되지 않는다.
+
+**권장**
+- person-only 로그 정책을 유지한다면 demo data와 filter에서 `"none"`을 제거한다.
+- operator 데이터가 없다면 operator filter UI를 제거한다.
+- 장기적으로 operator를 쓰려면 `DetectionLogEntry.operator`를 추가하고 저장 경로까지 연결한다.
+
+**완료 조건**
+- [ ] demo data의 `class: "none"` 제거
+- [ ] FilterBar의 `None` option 제거 또는 실제 로그 정책 변경
+- [ ] operator filter 제거 또는 실제 필터 조건 연결
+
+---
+
+### 8. False Positive 상태가 세션 내 메모리에만 있음
+
+**파일**: `src/pages/History.tsx`, `src/components/history/DetailModal.tsx`
+
+**현재**
+- False Positive 버튼과 `statusOverride`는 구현되어 있다.
+- 페이지 새로고침/재방문 후 상태가 유지되지 않는다.
+
+**권장**
+- `localStorage`에 false positive override를 저장한다.
+- key 예: `fp_overrides`
+- detection id가 없다면 timestamp 기반 key의 충돌 가능성을 고려한다.
+
+**완료 조건**
+- [ ] false positive override localStorage persist
+- [ ] History mount 시 override hydrate
+- [ ] 재방문 후 상태 유지
+
+---
+
+### 9. TopBar latency 표시가 spec과 맞지 않음
+
+**파일**: `src/components/layout/TopBar.tsx`, `src/components/settings/DiagnosticsMonitor.tsx`, `src/store/robotStore.ts`
+
+**현재**
+- TopBar는 ROS/FastAPI/Camera/AI/Battery 상태를 표시한다.
+- `UI_DETAILS.md`와 `API_DETAILS.md`에는 network ping/latency 표시가 요구된다.
+- 현재 TopBar에는 latency 값이 없다.
+
+**권장**
+- 선택 A: spec에서 latency 표시 요구를 제거한다.
+- 선택 B: `DiagnosticsMonitor`의 `/ping` fetch 왕복 시간을 측정해 store에 저장하고 TopBar에 표시한다.
+
+**완료 조건**
+- [ ] latency 표시를 구현하거나 관련 spec을 명확히 조정
+- [ ] `/ping` endpoint 실패 시 latency가 `--`로 표시됨
+
+---
+
+### 10. E-stop 성공/실패 피드백이 약함
 
 **파일**: `src/components/dashboard/DriveController.tsx`
 
 **현재**
-```ts
-function publishCmdVel(lx: number, az: number): boolean {
-  const ros = getRos();
-  if (!ros) return false;
-  const topic = new ROSLIB.Topic({ ros, name: "/cmd_vel", messageType: "geometry_msgs/Twist" });
-  topic.publish(...);
-  return true;
-}
-```
-
-**문제**
-- 클릭마다 `ROSLIB.Topic`이 새로 생성됩니다.
-- 짧은 반복 입력에서 불필요한 객체 생성이 늘어납니다.
-- publish 실패 여부가 UI에 반영되지 않습니다.
+- E-stop은 `publishCmdVel(0, 0)`를 호출한다.
+- 성공/실패 여부가 UI에 반영되지 않는다.
+- ROS disconnected 상태에서도 같은 버튼처럼 보인다.
 
 **권장**
-- `rosClient.ts` 또는 별도 ROS command helper에서 `/cmd_vel` topic을 캐시합니다.
-- `rosConnected === false`이면 버튼 disabled 또는 명확한 상태 표시를 추가합니다.
-- E-stop은 실패 여부를 사용자에게 알릴 수 있어야 합니다.
+- publish 성공 시 짧은 visual feedback을 표시한다.
+- 실패 또는 ROS disconnected 상태에서는 경고 문구를 표시한다.
+- E-stop 자체를 완전히 disabled할지는 별도로 결정한다. 안전 버튼은 연결 복구 직후 즉시 눌릴 수 있어야 하므로 UI 설계가 중요하다.
+
+**완료 조건**
+- [ ] E-stop 성공 feedback 표시
+- [ ] ROS disconnected 상태 표시
+- [ ] publish 실패 시 사용자에게 알림
 
 ---
 
-### 2. `useRosConnection.ts` - reconnect마다 subscriber 중복 생성 가능
-
-**파일**: `src/hooks/useRosConnection.ts`
-
-**현재**
-```ts
-ros.on("connection", () => {
-  const batterySub = new ROSLIB.Topic(...);
-  batterySub.subscribe(...);
-
-  const poseSub = new ROSLIB.Topic(...);
-  poseSub.subscribe(...);
-});
-```
-
-**문제**
-- subscriber가 `connection` callback 내부 지역 변수라 cleanup에서 직접 unsubscribe할 수 없습니다.
-- reconnect가 반복되면 이전 connection의 구독 정리가 명확하지 않습니다.
-
-**권장**
-```ts
-let batterySub: ROSLIB.Topic | null = null;
-let poseSub: ROSLIB.Topic | null = null;
-
-function unsubscribeAll() {
-  batterySub?.unsubscribe();
-  poseSub?.unsubscribe();
-  batterySub = null;
-  poseSub = null;
-}
-```
-
-- `close`, cleanup 전에 `unsubscribeAll()` 호출
-- 새 연결 전에 이전 `ros`와 subscriber 정리
-
----
-
-### 3. `TopBar.tsx` - ping 상태가 실측값이 아님
-
-**파일**: `src/components/layout/TopBar.tsx`
-
-**현재**
-```ts
-const pingMs: number | null = fastapiConnected ? null : null;
-```
-
-**문제**
-- `getPingTone`은 있지만 실제 ping 값은 없습니다.
-- 화면에서 ping widget을 제거했거나 AI 상태로 대체한 상태라면 dead code가 남아 있습니다.
-
-**권장**
-- 선택 A: `getPingTone`과 `pingMs` 제거
-- 선택 B: `DiagnosticsMonitor`의 `/ping` fetch 시간을 측정해 store에 저장하고 TopBar에서 표시
-
----
-
-### 4. TypeScript 빌드 실패
-
-**파일**: `src/main.tsx`
-
-**현재 오류**
-```txt
-src/main.tsx(4,8): error TS2882:
-Cannot find module or type declarations for side-effect import of './index.css'.
-```
-
-**권장**
-- `src/vite-env.d.ts` 또는 `src/global.d.ts` 추가
-
-```ts
-/// <reference types="vite/client" />
-```
-
-또는
-
-```ts
-declare module "*.css";
-```
-
----
-
-## 🟡 Medium: 기능/운영 품질 보완
-
-### 5. `AIOverlay.tsx` - bbox 좌표 계산은 수정됐지만 실제 화면 검증 필요
+### 11. bbox 좌표계가 고정 해상도 가정에 묶여 있음
 
 **파일**: `src/components/dashboard/AIOverlay.tsx`
 
 **현재**
-- `object-cover` crop 기준으로 rendered rect 계산을 수정했습니다.
-- `ResizeObserver`로 컨테이너 크기를 추적합니다.
-
-**남은 리스크**
-- 서버 bbox 좌표계가 항상 `640x480`이라고 가정합니다.
-- 실제 stream 해상도가 다르면 bbox가 다시 어긋납니다.
+- overlay는 `object-cover` crop 기준으로 보정되어 있다.
+- 단, 서버 bbox 좌표계가 항상 같은 frame size라고 가정한다.
 
 **권장**
-- AI WebSocket payload에 `frame_width`, `frame_height`를 포함시키거나 설정값으로 분리
-- 최소 16:9, 4:3, 좁은 화면에서 시각 검증
+- AI WebSocket payload에 `frame_width`, `frame_height`를 포함한다.
+- 불가능하면 frontend 설정값으로 source frame size를 분리한다.
+- 16:9, 4:3, narrow layout에서 실제 영상 기준으로 시각 검증한다.
 
----
+**완료 조건**
+- [ ] bbox source frame size 계약 명시
+- [ ] 실제 stream에서 bbox 위치 검증
+- [ ] viewport 변경 시 overlay 위치 유지
 
-### 6. `useAIStream.ts` - `snapshotOriginal` 캡처 실패도 명시적으로 처리
+## Low: 정리/문서화
 
-**파일**: `src/hooks/useAIStream.ts`, `src/hooks/useVideoCapture.ts`
+### 12. confidence 단위 문서 불일치
+
+**파일**: `README.md`, `docs/AGENTS.md`, `docs/specs/API_DETAILS.md`
 
 **현재**
-- `useVideoCapture`는 CORS/canvas 실패 시 `undefined`를 반환합니다.
-- `useAIStream`은 snapshot이 없어도 로그를 저장합니다.
+- 현재 코드는 `confidenceThreshold`를 0-100 기준으로 사용한다.
+- 일부 문서에는 아직 `0.5`, `0-1` 기준 표현이 남아 있다.
 
 **권장**
-- 로그 항목에 `snapshotStatus?: "captured" | "unavailable"` 같은 상태를 추가하거나,
-- UI에서 `No Image`의 원인을 알 수 있게 표시합니다.
+- `confidence`, `confidenceThreshold`는 모두 `0..100` percent scale로 통일한다.
+- backend API threshold가 0-1인지 0-100인지도 계약을 명시한다.
+
+**완료 조건**
+- [ ] README threshold 설명 0-100으로 수정
+- [ ] docs/AGENTS.md 기본값 50으로 수정
+- [ ] API_DETAILS threshold payload 단위 명시
 
 ---
 
-### 7. `DriveController.tsx` - `driveMode` 이중 상태
+### 13. MiniMap은 Phase 3 보류로 명확히 표시
 
-**파일**: `src/components/dashboard/DriveController.tsx`
+**파일**: `src/components/dashboard/MiniMap.tsx`, `docs/specs/IMPLEMENTATION_PHASES.md`, `docs/specs/UI_DETAILS.md`
 
 **현재**
-```ts
-const { driveMode, setDriveMode, rosConnected } = useRobotStore();
-const [localMode, setLocalMode] = useState<DriveMode>(driveMode);
-```
-
-**문제**
-- 외부에서 store의 `driveMode`가 변경되면 `localMode`가 따라가지 않습니다.
+- `MiniMap`은 placeholder다.
+- `IMPLEMENTATION_PHASES.md`에서는 Phase 3 제외로 표시되어 있으나, `UI_DETAILS.md`에는 구현 대상처럼 남아 있다.
 
 **권장**
-- `localMode` 제거
-- store의 `driveMode`를 단일 source of truth로 사용
+- Phase 1/2에서는 placeholder 유지라고 명시한다.
+- `/map`, `/amcl_pose`, waypoint, detection marker는 Phase 3 ticket으로 분리한다.
 
----
-
-### 8. `History.tsx` - demo 데이터와 실제 로그 정책 불일치
-
-**파일**: `src/pages/History.tsx`
-
-**현재**
-- demo에는 `class: "none"` 항목이 있습니다.
-- 실제 `useAIStream`은 `cls === "person"`일 때만 `pushDetectionLog` 합니다.
-
-**권장**
-- demo 데이터도 person-only로 맞추거나,
-- 실제 로그에도 threshold 미달/none 이벤트를 기록할 정책인지 결정합니다.
-
----
-
-### 9. `DiagnosticsMonitor.tsx` - FastAPI `/ping` 경로 계약 확인 필요
-
-**파일**: `src/components/settings/DiagnosticsMonitor.tsx`
-
-**현재**
-```ts
-fetch(`${fastapiUrl}/ping`, { signal: AbortSignal.timeout(3000) })
-```
-
-**리스크**
-- 백엔드 health endpoint가 `/ping`이 아니면 항상 disconnected로 표시됩니다.
-
-**권장**
-- `docs/specs/API_DETAILS.md`에 health endpoint 명시
-- FastAPI 실제 endpoint와 맞추기 (`/ping`, `/health`, `/api/health` 중 하나)
-
----
-
-## 🟢 Low: 정리/문서화
-
-### 10. `rosClient.ts` - 역할 확장
-
-**현재**
-- ROS instance getter/setter만 제공합니다.
-
-**권장**
-- `/cmd_vel` topic 캐시
-- 연결 상태 helper
-- 향후 `/map`, `/amcl_pose` 관련 공통 유틸 위치로 사용
-
----
-
-### 11. 문서 단위 불일치 정리
-
-**파일**
-- `README.md`
-- `docs/AGENTS.md`
-- `docs/specs/API_DETAILS.md`
-
-**문제**
-- 일부 문서가 아직 `confidenceThreshold=0.5` 또는 0-1 기준을 언급합니다.
-- 현재 코드는 0-100 기준입니다.
-
-**권장**
-- 모든 문서에서 `confidence`, `confidenceThreshold`를 `0..100`으로 통일
-
----
-
-### 12. `MiniMap.tsx` 미구현
-
-**파일**: `src/components/dashboard/MiniMap.tsx`
-
-**현재**
-- `ros2djs map viewport` placeholder만 렌더링합니다.
-
-**권장**
-- Phase 3로 남기는 경우 명시
-- `/map`, `/amcl_pose` 구현 범위를 별도 티켓으로 분리
-
----
-
-## 우선순위 요약
-
-| 우선순위 | 항목 | 파일 | 복잡도 |
-|---------|------|------|--------|
-| 🔴 High | `/cmd_vel` topic 캐시 및 publish 실패 처리 | `DriveController.tsx`, `rosClient.ts` | 중간 |
-| 🔴 High | ROS subscriber cleanup/reconnect 안정화 | `useRosConnection.ts` | 중간 |
-| 🔴 High | TypeScript CSS import 선언 추가 | `src/vite-env.d.ts` 등 | 낮음 |
-| 🔴 High | TopBar ping dead code 정리 또는 실측 구현 | `TopBar.tsx` | 낮음-중간 |
-| 🟡 Medium | bbox 좌표 실제 화면 검증 및 frame size 일반화 | `AIOverlay.tsx` | 중간 |
-| 🟡 Medium | snapshot 실패 상태 표시 | `useAIStream.ts`, `DetailModal.tsx` | 낮음 |
-| 🟡 Medium | driveMode 단일 상태화 | `DriveController.tsx` | 낮음 |
-| 🟡 Medium | demo log 정책 정리 | `History.tsx` | 낮음 |
-| 🟢 Low | confidence 문서 단위 통일 | docs | 낮음 |
-| 🟢 Low | MiniMap Phase 분리 | `MiniMap.tsx`, docs | 중간 |
-
----
+**완료 조건**
+- [ ] UI_DETAILS에서 MiniMap phase 명시
+- [ ] 구현 체크리스트에서는 Phase 3 보류 항목으로만 추적
 
 ## 권장 작업 순서
 
-1. TypeScript 실패 해결 (`vite-env.d.ts` 추가)
-2. ROS connection lifecycle 정리 (`useRosConnection`, `rosClient`)
-3. `/cmd_vel` publish path 안정화 (`DriveController`)
-4. TopBar 상태 표시 dead code 정리
-5. 실제 Jetson/rosbridge 환경에서 ROS, camera, AI stream smoke test
-6. bbox 좌표/캡처 결과를 desktop viewport에서 시각 검증
-7. README/AGENTS/API_DETAILS 문서의 confidence 단위 정리
+1. `StoragePolicy`를 `useAIStream` 캡처 경로에 연결
+2. `CriticalAlarmOverlay` 오디오 알람과 settings 값 연결
+3. `AIStatusPanel` FREEZE 버튼 연결
+4. `StorageSettings` destructive action 구현 또는 disabled 처리
+5. `AlertFeed` pose 연동 및 raw BBox 표시 정리
+6. History filter/demo/false positive persistence 정리
+7. TopBar latency 표시 구현 또는 spec 조정
+8. 실제 Jetson/rosbridge 환경에서 ROS, camera, AI stream smoke test
+9. bbox 좌표/캡처 결과를 desktop/mobile viewport에서 시각 검증
+10. README/AGENTS/API_DETAILS confidence 단위 정리
 
----
-
-## 검증 체크리스트
+## 통합 검증 체크리스트
 
 - [ ] `npm run build`
 - [ ] `npx tsc -b`
@@ -315,10 +324,17 @@ fetch(`${fastapiUrl}/ping`, { signal: AbortSignal.timeout(3000) })
 - [ ] rosbridge up 후 자동 재연결 및 `rosConnected=true`
 - [ ] `/battery_state` 수신 시 TopBar battery 반영
 - [ ] `/amcl_pose` 수신 시 store pose 반영
-- [ ] manual forward/back/left/right가 `/cmd_vel` 1회 publish
+- [ ] manual forward/back/left/right가 `/cmd_vel` publish
 - [ ] E-stop이 연결 상태에서 zero velocity publish
+- [ ] E-stop 성공/실패 feedback 표시
 - [ ] AI stream disconnect 후 3초 재연결
 - [ ] detection log가 3초 throttle로 쌓임
-- [ ] snapshot CORS 실패 시 UI가 깨지지 않음
+- [ ] `storagePolicy === "original"`일 때 delayed snapshot skip
+- [ ] `storagePolicy === "original+inverted"`일 때 delayed snapshot 저장
+- [ ] snapshot CORS 실패 시 UI가 깨지지 않고 원인이 표시됨
+- [ ] audio alarm toggle/volume이 CriticalAlarmOverlay에 반영됨
+- [ ] FREEZE 버튼 클릭 시 현재 프레임 캡처
+- [ ] AlertCard에 pose 좌표 표시
+- [ ] History demo/filter 정책이 person-only 로그 정책과 일치
+- [ ] false positive 상태가 페이지 재방문 후 유지
 - [ ] bbox가 실제 영상 위 탐지 위치와 일치
-
