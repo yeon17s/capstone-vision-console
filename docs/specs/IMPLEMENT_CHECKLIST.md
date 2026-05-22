@@ -47,9 +47,9 @@
 - `useAIStream`은 정책과 무관하게 `snapshotOriginal`과 delayed `snapshotInverted`를 모두 캡처한다.
 
 **완료 조건**
-- [ ] `storagePolicy === "original"`일 때 delayed snapshot skip
-- [ ] `storagePolicy === "original+inverted"`일 때 delayed snapshot 저장
-- [ ] 정책 변경 후 새 detection log부터 즉시 반영
+- [x] `storagePolicy === "original"`일 때 delayed snapshot skip
+- [x] `storagePolicy === "original+inverted"`일 때 delayed snapshot 저장
+- [x] 정책 변경 후 새 detection log부터 즉시 반영
 
 ---
 
@@ -110,9 +110,9 @@
 - Detail 화면에서는 단순히 `No Image`로 표시된다.
 
 **완료 조건**
-- [ ] `DetectionLogEntry`에 `snapshotStatus` 또는 `snapshotError` 추가
-- [ ] Detail 화면에서 `Capture unavailable` 등 원인성 메시지 표시
-- [ ] delayed snapshot 의미가 명확하도록 `snapshotInverted` naming 또는 UI label 정리
+- [x] `DetectionLogEntry`에 `snapshotStatus` 또는 `snapshotError` 추가
+- [x] Detail 화면에서 `Capture unavailable` 등 원인성 메시지 표시
+- [x] delayed snapshot 의미가 명확하도록 `snapshotInverted` naming 또는 UI label 정리
 
 ---
 

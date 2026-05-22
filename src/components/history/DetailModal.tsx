@@ -1,4 +1,4 @@
-import type { DetectionLogEntry } from "../../store/robotStore";
+import type { DetectionLogEntry, SnapshotStatus } from "../../store/robotStore";
 import type { RowStatus } from "../../pages/History";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
@@ -64,6 +64,27 @@ function ConfidenceDonut({ conf }: { conf: number }) {
       </div>
       <Typography variant="overline" tone="subtle">Confidence</Typography>
     </div>
+  );
+}
+
+const SNAPSHOT_UNAVAILABLE_LABEL: Record<Exclude<SnapshotStatus, "ok">, string> = {
+  cors_error:    "Capture unavailable (CORS)",
+  canvas_error:  "Capture unavailable (canvas error)",
+  skipped:       "Not saved (policy: Original Only)",
+  unavailable:   "Capture unavailable",
+};
+
+function SnapshotCell({ dataUrl, status, alt }: { dataUrl?: string; status?: SnapshotStatus; alt: string }) {
+  if (dataUrl) {
+    return <img src={dataUrl} alt={alt} className="h-full w-full object-cover" />;
+  }
+  const msg = status && status !== "ok"
+    ? SNAPSHOT_UNAVAILABLE_LABEL[status]
+    : "No Image";
+  return (
+    <Typography as="p" variant="overline" className="text-center text-mission-text/30 px-2">
+      {msg}
+    </Typography>
   );
 }
 
@@ -143,30 +164,26 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              {entry.snapshotOriginal ? (
-                <img src={entry.snapshotOriginal} alt="Original (Detection Moment)" className="h-full w-full object-cover" />
-              ) : (
-                <Typography as="p" variant="overline" className="text-center text-mission-text/30">
-                  No Image
-                </Typography>
-              )}
+              <SnapshotCell
+                dataUrl={entry.snapshotOriginal}
+                status={entry.snapshotOriginalStatus}
+                alt="RGB snapshot at detection moment"
+              />
             </div>
             <Typography as="span" variant="overline" className="text-mission-text/30">
-              Original<br />(Detection Moment)
+              RGB (Detection Moment)
             </Typography>
           </div>
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              {entry.snapshotInverted ? (
-                <img src={entry.snapshotInverted} alt="Inverted (Detection Moment)" className="h-full w-full object-cover" style={{ filter: "invert(1) hue-rotate(180deg)" }} />
-              ) : (
-                <Typography as="p" variant="overline" className="text-center text-mission-text/30">
-                  No Image
-                </Typography>
-              )}
+              <SnapshotCell
+                dataUrl={entry.snapshotInverted}
+                status={entry.snapshotInvertedStatus}
+                alt="Thermal-view snapshot (1.5s after detection)"
+              />
             </div>
             <Typography as="span" variant="overline" className="text-mission-text/30">
-              Inverted<br />(Detection Moment)
+              Thermal View (Post-Detection)
             </Typography>
           </div>
         </div>

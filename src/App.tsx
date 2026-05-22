@@ -5,20 +5,24 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import useAIStream from "./hooks/useAIStream";
 import useRosConnection from "./hooks/useRosConnection";
+import type { CaptureResult } from "./hooks/useVideoCapture";
 
 type TabName = "Dashboard" | "History" | "Settings";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabName>("Dashboard");
 
-  const captureRef = useRef<((inverted: boolean) => string | undefined) | undefined>(undefined);
+  const captureRef = useRef<((inverted: boolean) => CaptureResult) | undefined>(undefined);
 
-  const handleCaptureReady = useCallback((fn: (inverted: boolean) => string | undefined) => {
+  const handleCaptureReady = useCallback((fn: (inverted: boolean) => CaptureResult) => {
     captureRef.current = fn;
     return () => { captureRef.current = undefined; };
   }, []);
 
-  useAIStream({ capture: (inverted) => captureRef.current?.(inverted) });
+  useAIStream({
+    capture: (inverted) =>
+      captureRef.current?.(inverted) ?? { dataUrl: undefined, status: "unavailable" },
+  });
   useRosConnection();
 
   return (

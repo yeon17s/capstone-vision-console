@@ -3,13 +3,14 @@ import useRobotStore from "../store/robotStore";
 import useSettingsStore from "../store/settingsStore";
 import { appendHistoryLog } from "../lib/historyApi";
 import type { DetectionLogEntry } from "../store/robotStore";
+import type { CaptureResult } from "./useVideoCapture";
 
 const LOG_THROTTLE_MS = 3000;
 const FLUSH_INTERVAL_MS = 10_000;
 const PENDING_QUEUE_KEY = "sentinel-pending-queue";
 
 interface UseAIStreamOptions {
-  capture?: (inverted: boolean) => string | undefined;
+  capture?: (inverted: boolean) => CaptureResult;
 }
 
 interface PendingHistoryItem {
@@ -67,6 +68,9 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
   const poseRef = useRef(useRobotStore.getState().pose);
   const jetsonIp = useSettingsStore((s) => s.jetsonIp);
   const fastapiUrl = useSettingsStore((s) => s.fastapiUrl);
+  const storagePolicy = useSettingsStore((s) => s.storagePolicy);
+  const storagePolicyRef = useRef(storagePolicy);
+  storagePolicyRef.current = storagePolicy;
   const fastapiUrlRef = useRef(fastapiUrl);
   fastapiUrlRef.current = fastapiUrl;
 
@@ -184,7 +188,9 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
             if (now - lastLoggedAtRef.current < LOG_THROTTLE_MS) return;
             lastLoggedAtRef.current = now;
 
-            const snapshotOriginal = captureRef.current?.(false);
+            const originalResult = captureRef.current?.(false);
+            const snapshotOriginal = originalResult?.dataUrl;
+            const snapshotOriginalStatus = originalResult?.status ?? "unavailable";
             const poseAtDetection = { ...poseRef.current };
 
             if (invertedSnapshotTimerRef.current) {
@@ -194,16 +200,21 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
             invertedSnapshotTimerRef.current = setTimeout(() => {
               if (!isMounted) return;
               let snapshotInverted: string | undefined;
-              try {
-                snapshotInverted = captureRef.current?.(true);
-              } catch {
-                snapshotInverted = undefined;
+              let snapshotInvertedStatus: DetectionLogEntry["snapshotInvertedStatus"];
+              if (storagePolicyRef.current === "original+inverted") {
+                const invertedResult = captureRef.current?.(true);
+                snapshotInverted = invertedResult?.dataUrl;
+                snapshotInvertedStatus = invertedResult?.status ?? "unavailable";
+              } else {
+                snapshotInvertedStatus = "skipped";
               }
               const logEntry: DetectionLogEntry = {
                 ...detection,
                 timestamp: data.timestamp,
                 snapshotOriginal,
+                snapshotOriginalStatus,
                 snapshotInverted,
+                snapshotInvertedStatus,
                 pose: poseAtDetection,
               };
               pushDetectionLog(logEntry);

@@ -7,9 +7,10 @@ import DriveController from "../components/dashboard/DriveController";
 import VideoStream from "../components/dashboard/VideoStream";
 import Typography from "../components/ui/Typography";
 import { useVideoCapture } from "../hooks/useVideoCapture";
+import type { CaptureResult } from "../hooks/useVideoCapture";
 
 interface DashboardProps {
-  onCaptureReady?: (capture: (inverted: boolean) => string | undefined) => void;
+  onCaptureReady?: (capture: (inverted: boolean) => CaptureResult) => void;
 }
 
 export default function Dashboard({ onCaptureReady }: DashboardProps) {

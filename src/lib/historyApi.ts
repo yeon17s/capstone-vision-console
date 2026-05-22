@@ -1,4 +1,4 @@
-import type { DetectionLogEntry } from "../store/robotStore";
+import type { DetectionLogEntry, SnapshotStatus } from "../store/robotStore";
 
 // Flat CSV row shape the backend expects/returns.
 export interface HistoryRow {
@@ -39,6 +39,11 @@ function toRow(entry: DetectionLogEntry): HistoryRow {
   };
 }
 
+const CSV_STATUS_MAP: Record<HistoryRow["snapshot_status"], SnapshotStatus> = {
+  captured:    "ok",
+  unavailable: "unavailable",
+};
+
 function fromRow(row: HistoryRow): DetectionLogEntry {
   const poseX = safeNum(row.pose_x, NaN);
   const poseY = safeNum(row.pose_y, NaN);
@@ -58,6 +63,7 @@ function fromRow(row: HistoryRow): DetectionLogEntry {
     fps: safeNum(row.fps, 0),
     frameDelayMs: safeNum(row.frame_delay_ms, 0),
     pose: hasPose ? { x: poseX, y: poseY, yaw: poseYaw } : undefined,
+    snapshotOriginalStatus: CSV_STATUS_MAP[row.snapshot_status],
   };
 }
 

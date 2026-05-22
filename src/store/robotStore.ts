@@ -22,11 +22,15 @@ export interface Detection {
   mode?: string;
 }
 
+export type SnapshotStatus = "ok" | "cors_error" | "canvas_error" | "skipped" | "unavailable";
+
 export interface DetectionLogEntry extends Detection {
   timestamp: string;
-  snapshotOriginal?: string;  // data URL, captured at detection moment
-  snapshotInverted?: string;  // data URL, captured 1–2s after detection
-  pose?: Pose;                // robot pose at detection moment
+  snapshotOriginal?: string;        // data URL, captured at detection moment
+  snapshotOriginalStatus?: SnapshotStatus;
+  snapshotInverted?: string;        // data URL, captured 1–2s after detection
+  snapshotInvertedStatus?: SnapshotStatus;
+  pose?: Pose;                      // robot pose at detection moment
 }
 
 type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected" | "fastapiConnected";
