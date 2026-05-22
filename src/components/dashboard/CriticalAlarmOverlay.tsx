@@ -5,9 +5,10 @@ export default function CriticalAlarmOverlay() {
   const detection = useRobotStore((s) => s.detection);
   const threshold = useSettingsStore((s) => s.confidenceThreshold);
 
-  if (detection.class === "none" || detection.confidence < threshold) {
-    return null;
-  }
+  const isActive =
+    detection.class !== "none" && detection.confidence >= threshold;
+
+  if (!isActive) return null;
 
   return (
     <div className="pointer-events-none absolute inset-[6px] animate-pulse rounded-[18px] border-2 border-mission-critical shadow-mission-glow-red">

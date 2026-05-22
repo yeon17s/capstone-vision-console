@@ -5,6 +5,7 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import useAIStream from "./hooks/useAIStream";
 import useRosConnection from "./hooks/useRosConnection";
+import { useAlarmSound } from "./hooks/useAlarmSound";
 import type { CaptureResult } from "./hooks/useVideoCapture";
 
 type TabName = "Dashboard" | "History" | "Settings";
@@ -24,6 +25,7 @@ export default function App() {
       captureRef.current?.(inverted) ?? { dataUrl: undefined, status: "unavailable" },
   });
   useRosConnection();
+  useAlarmSound();
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-mission-bg text-mission-text">

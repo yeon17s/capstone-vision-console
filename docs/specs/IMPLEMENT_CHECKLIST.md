@@ -62,11 +62,11 @@
 - `CriticalAlarmOverlay`는 visual alarm만 표시하고 오디오 재생은 구현되어 있지 않다.
 
 **완료 조건**
-- [ ] alarm sound asset 위치 결정 (`public/sounds/alarm.mp3` 등)
-- [ ] detection 발생 시 설정값에 따라 오디오 알람 재생
-- [ ] detection 해제 시 오디오 정지 및 재생 위치 초기화
-- [ ] `volume` 변경 즉시 반영
-- [ ] 브라우저 autoplay 실패 시 UI가 깨지지 않음
+- [x] alarm sound asset 위치 결정 (`public/sounds/alarm.mp3` 등)
+- [x] detection 발생 시 설정값에 따라 오디오 알람 재생
+- [x] detection 해제 시 오디오 정지 및 재생 위치 초기화
+- [x] `volume` 변경 즉시 반영
+- [x] 브라우저 autoplay 실패 시 UI가 깨지지 않음
 
 ---
 
