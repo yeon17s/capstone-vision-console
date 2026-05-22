@@ -68,7 +68,7 @@ export default function AIOverlay() {
             variant="panelTitle"
             className="absolute -top-8 left-0 rounded-md bg-mission-critical px-2 py-1 tracking-[0.08em] text-white"
           >
-            {detection.class} | {detection.confidence.toFixed(1)}%
+            Detected | {detection.confidence.toFixed(1)}%
           </Typography>
         </div>
       )}

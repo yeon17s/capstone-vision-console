@@ -29,7 +29,7 @@ const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
   FalsePositive: "muted",
 };
 
-const COLS = ["Timestamp", "Conf (%)", "Class", "Mode", "Status"];
+const COLS = ["Timestamp", "Conf (%)", "Location", "Mode", "Status"];
 
 export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect }: DetectionTableProps) {
   return (
@@ -81,7 +81,15 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                         className={confColor(row.confidence)}
                       />
                     </td>
-                    <td className="px-4 py-2"><Typography as="span" variant="control" className="font-medium capitalize">{row.class}</Typography></td>
+                    <td className="px-4 py-2">
+                      {row.pose ? (
+                        <Typography as="span" variant="mono" className="text-mission-text/70">
+                          {row.pose.x.toFixed(2)}, {row.pose.y.toFixed(2)}
+                        </Typography>
+                      ) : (
+                        <Typography as="span" variant="mono" className="text-mission-text/30">—</Typography>
+                      )}
+                    </td>
                     <td className="px-4 py-2"><Typography as="span" variant="mono" tone="info" className="uppercase tracking-[0.08em] text-mission-info/90">{row.mode ?? "RGB"}</Typography></td>
                     <td className="px-4 py-2">
                       <StatusIndicator

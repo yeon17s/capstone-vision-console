@@ -34,14 +34,18 @@ function AlertCard({ entry }: { entry: DetectionLogEntry }) {
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <Typography as="span" variant="emphasis" className="capitalize">{entry.class}</Typography>
+          <div className="flex items-center gap-2">
+            <Typography as="span" variant="emphasis" className="text-mission-critical">Detected</Typography>
             <StatusIndicator tone={tone} />
           </div>
 
-          <Typography variant="control">
-            BBox: {entry.bbox.x}, {entry.bbox.y} / {entry.bbox.w}×{entry.bbox.h}
-          </Typography>
+          {entry.pose ? (
+            <Typography variant="control" className="text-mission-text/60">
+              X: {entry.pose.x.toFixed(2)} / Y: {entry.pose.y.toFixed(2)}
+            </Typography>
+          ) : (
+            <Typography variant="control" className="text-mission-text/30">Location unavailable</Typography>
+          )}
         </div>
       </div>
     </MissionCard>
@@ -49,7 +53,7 @@ function AlertCard({ entry }: { entry: DetectionLogEntry }) {
 }
 
 export default function AlertFeed() {
-  const detectionLog = useRobotStore((s) => s.detectionLog);
+  const detectionLog = useRobotStore((s) => s.recentLog);
 
   return (
     <MissionPanel

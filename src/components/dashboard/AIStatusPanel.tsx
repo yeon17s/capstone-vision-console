@@ -62,7 +62,7 @@ export default function AIStatusPanel({ inverted = false }: AIStatusPanelProps) 
         {/* Last Detected */}
         <StatusCell
           label="Last Detected"
-          value={detection.class}
+          value={detection.class === "person" ? "Detected" : "No Detection"}
           valueClass={detection.class === "person" ? "text-mission-critical" : "text-mission-text"}
         />
 

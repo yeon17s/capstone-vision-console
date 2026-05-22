@@ -111,9 +111,15 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         {/* Metadata */}
         <div className="flex flex-col gap-2 rounded-[16px] border border-mission-border bg-mission-bg px-4 py-3">
           <MetaRow label="Timestamp"   value={entry.timestamp} mono />
-          <MetaRow label="Class"       value={entry.class} />
+          <MetaRow label="Detection"   value="Detected" accent />
           <MetaRow label="Mode"        value={entry.mode ?? "RGB"} accent />
-          <MetaRow label="BBox"        value={`{${entry.bbox.x}, ${entry.bbox.y}, ${entry.bbox.w}, ${entry.bbox.h}}`} mono />
+          {entry.pose && (
+            <MetaRow
+              label="Location"
+              value={`X: ${entry.pose.x.toFixed(3)} / Y: ${entry.pose.y.toFixed(3)} / Yaw: ${entry.pose.yaw.toFixed(3)}`}
+              mono
+            />
+          )}
           <div className="flex items-baseline gap-2">
             <Typography as="span" variant="overline" tone="subtle" className="min-w-[110px]">
               FPS

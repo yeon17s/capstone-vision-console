@@ -1,8 +1,7 @@
 # 구현 점검 리스트 (Implementation Checklist)
 
-> 기준일: 2026-05-13  
+> 기준일: 2026-05-22  
 > 현재 워크트리 기준 주요 구현 리스크와 남은 작업을 정리한다.  
-> 이 문서는 우선 `IMPLEMENT_CHECKLIST.md` 한 파일 안에서 관리하며, 이후 `PHASE2_PLAN.md` / `UI_GAPS.md`로 분리할 수 있다.
 
 ## 현재 검증 상태
 
@@ -18,9 +17,10 @@
 | AI WebSocket | `useAIStream` mount, reconnect, 3초 throttle, 2회 snapshot capture 구현 | 보완 필요 |
 | Camera stream | settings IP 기반 MJPEG URL, `cameraConnected` onLoad/onError 반영 | 검증 필요 |
 | ROS bridge | `useRosConnection` mount, reconnect, battery/pose subscribe, cleanup 구현 | 대체로 완료 |
-| Drive control | 공유 ROS 인스턴스 사용, `/cmd_vel` topic cache, manual drive, E-stop 구현 | 보완 필요 |
+| Drive control | 공유 ROS 인스턴스 사용, `/cmd_vel` topic cache, manual drive, E-stop 구현. 현재 click 단발 명령 중심 | 보완 필요 |
 | Dashboard overlay | `object-cover` crop 기준 bbox 계산 구현 | 실환경 검증 필요 |
-| History | detectionLog 연결, confidence 0-100 반영 | 보완 필요 |
+| Detection UI | bbox overlay 구현. 현재 class label/person 표시 정책은 수정 필요 | 보완 필요 |
+| History | frontend `detectionLog` 연결, confidence 0-100 반영. Jetson CSV 누적 저장/불러오기 필요 | 보완 필요 |
 | Settings | localStorage persistence, confidence migration 구현 | 보완 필요 |
 | TopBar/Diagnostics | ROS/FastAPI/Camera/AI/Battery 상태 표시 구현 | ping/경고 보완 필요 |
 | MiniMap | placeholder | Phase 3 보류 |
@@ -28,7 +28,117 @@
 
 ## High: 우선 수정 필요
 
-### 1. `StorageSettings`의 storage policy가 실제 캡처 동작에 반영되지 않음
+### 1. Detection log를 Jetson CSV에 누적 저장하고 다시 불러오기
+
+**파일**: `src/hooks/useAIStream.ts`, `src/pages/History.tsx`, `src/store/robotStore.ts`, backend/Jetson logging endpoint
+
+**요구**
+- detection log는 브라우저 메모리/localStorage에만 의존하지 않는다.
+- Jetson 쪽에 CSV 파일로 계속 append 저장한다.
+- History 화면은 Jetson에 누적된 CSV를 불러와 이전 기록까지 볼 수 있어야 한다.
+
+**문제**
+- 현재 frontend `detectionLog`는 런타임 상태 중심이라 장기 누적 기록으로 쓰기 어렵다.
+- 브라우저를 새로 열거나 다른 장비에서 접속하면 Jetson에 쌓인 기록과 동기화되지 않는다.
+
+**권장**
+- Jetson/FastAPI에 CSV append endpoint를 둔다.
+  - 예: `POST /api/history/log`
+  - body: timestamp, confidence, bbox, pose, snapshot status 등
+- CSV read endpoint를 둔다.
+  - 예: `GET /api/history`
+  - CSV를 파싱해 JSON array로 반환
+- frontend는 detection 발생 시 backend로 log append를 요청한다.
+- History mount 시 `/api/history`를 fetch해서 store에 hydrate한다.
+- 네트워크 실패 시 frontend queue 또는 retry 정책을 둔다.
+
+**완료 조건**
+- [ ] detection 발생 시 Jetson CSV에 row append
+- [ ] 앱 재접속 후 History에서 기존 CSV 기록 조회
+- [ ] CSV header/schema 문서화
+- [ ] backend 통신 실패 시 UI가 깨지지 않고 재시도 또는 실패 상태 표시
+- [ ] frontend 임시 log와 Jetson CSV log의 중복 저장 방지 정책 결정
+
+---
+
+### 2. Manual control을 press-and-hold 방식으로 변경
+
+**파일**: `src/components/dashboard/DriveController.tsx`, `src/lib/rosClient.ts`
+
+**요구**
+- 방향 버튼을 한 번 클릭하면 한 번만 움직이는 방식이 아니라, 버튼을 꾹 누르는 동안 계속 움직여야 한다.
+- 버튼을 떼면 즉시 zero velocity를 publish해 정지해야 한다.
+
+**현재**
+- manual forward/back/left/right는 click handler에서 `/cmd_vel`을 1회 publish한다.
+
+**권장**
+- `pointerdown` 또는 `mousedown/touchstart`에서 interval publish를 시작한다.
+- `pointerup`, `pointerleave`, `blur`, `visibilitychange`에서 interval을 정리하고 `publishCmdVel(0, 0)`을 보낸다.
+- publish interval은 100-200ms 범위로 시작하고 실제 TurtleBot 반응을 보고 조정한다.
+- E-stop은 hold interval보다 높은 우선순위로 interval을 즉시 중단해야 한다.
+
+**완료 조건**
+- [ ] 버튼을 누르는 동안 같은 방향 `/cmd_vel`이 반복 publish됨
+- [ ] 버튼을 떼면 zero velocity publish
+- [ ] pointer cancel/화면 이탈/탭 비활성화 시에도 정지
+- [ ] E-stop 클릭 시 hold interval 즉시 중단
+
+---
+
+### 3. Auto Patrol 모드 제거
+
+**파일**: `src/components/dashboard/DriveController.tsx`, `src/store/robotStore.ts`, 관련 UI 문서
+
+**요구**
+- Auto Patrol 기능과 UI를 제거한다.
+- 조작 모드는 manual drive 중심으로 단순화한다.
+
+**현재**
+- `DriveController`에는 Auto Patrol / Manual Mode toggle UI가 있다.
+- store에도 `driveMode` 상태가 남아 있다.
+
+**권장**
+- Auto Patrol 버튼을 제거한다.
+- `driveMode`가 다른 컴포넌트 표시용으로만 쓰이는지 확인한다.
+- 더 이상 필요 없다면 `driveMode`, `setDriveMode`, 관련 타입을 제거한다.
+- `AIStatusPanel` 등에서 mode 표시가 필요하면 "Manual" 고정 표시 또는 해당 UI 제거를 결정한다.
+
+**완료 조건**
+- [ ] Auto Patrol 버튼이 화면에서 제거됨
+- [ ] auto mode로 전환되는 경로가 없음
+- [ ] 불필요한 `driveMode` 상태 제거 또는 manual-only로 정리
+- [ ] 관련 문서에서 Auto Patrol 요구 제거
+
+---
+
+### 4. Detection UI에서 class label(`person`) 제거
+
+**파일**: `src/components/dashboard/AIOverlay.tsx`, `src/components/dashboard/AIStatusPanel.tsx`, `src/components/dashboard/AlertFeed.tsx`, `src/pages/History.tsx`
+
+**요구**
+- 화면에 `person` class label을 직접 표시하지 않는다.
+- bbox 위/안에는 class명 대신 "Detected" 같은 감지 문구만 표시한다.
+
+**현재**
+- AI payload와 store는 `class: "person" | "none"` 정책을 사용한다.
+- 일부 UI는 `person` label 또는 class 값을 그대로 노출할 수 있다.
+
+**권장**
+- backend/store의 `class` 값은 내부 판단용으로 유지해도 된다.
+- operator-facing UI에서는 `person` 대신 "Detected"를 표시한다.
+- bbox label, Alert card, History table/detail에서 class 컬럼/텍스트 노출 여부를 점검한다.
+- History에서 class filter가 필요 없다면 제거한다.
+
+**완료 조건**
+- [ ] bbox overlay에 `person` 대신 "Detected" 표시
+- [ ] AlertFeed/History에서 `person` label 직접 노출 제거 또는 운영자용 문구로 대체
+- [ ] class filter 제거 또는 내부 필터로 숨김 처리
+- [ ] detection 조건은 기존 `class === "person"` 기반으로 유지되는지 확인
+
+---
+
+### 5. `StorageSettings`의 storage policy가 실제 캡처 동작에 반영되지 않음
 
 **파일**: `src/components/settings/StorageSettings.tsx`, `src/hooks/useAIStream.ts`
 
@@ -52,7 +162,7 @@
 
 ---
 
-### 2. 오디오 알람 설정이 `CriticalAlarmOverlay`와 연결되지 않음
+### 6. 오디오 알람 설정이 `CriticalAlarmOverlay`와 연결되지 않음
 
 **파일**: `src/components/settings/AIConfig.tsx`, `src/components/dashboard/CriticalAlarmOverlay.tsx`
 
@@ -78,7 +188,7 @@
 
 ---
 
-### 3. `AIStatusPanel`의 FREEZE 버튼이 동작하지 않음
+### 7. `AIStatusPanel`의 FREEZE 버튼이 동작하지 않음
 
 **파일**: `src/components/dashboard/AIStatusPanel.tsx`, `src/pages/Dashboard.tsx`
 
@@ -101,7 +211,7 @@
 
 ---
 
-### 4. Settings의 destructive action 버튼들이 미연결 상태
+### 8. Settings의 destructive action 버튼들이 미연결 상태
 
 **파일**: `src/components/settings/StorageSettings.tsx`, `src/store/robotStore.ts`
 
@@ -126,28 +236,31 @@
 
 ## Medium: 기능/운영 품질 보완
 
-### 5. `AlertFeed`가 raw BBox를 노출하고 pose/map location을 표시하지 않음
+### 9. `AlertFeed`가 raw BBox를 노출하고 pose/map location을 표시하지 않음
 
 **파일**: `src/components/dashboard/AlertFeed.tsx`, `src/store/robotStore.ts`, `src/hooks/useAIStream.ts`
 
 **현재**
 - Alert card에 `BBox: x, y / w x h` raw 숫자가 직접 표시된다.
 - detection 시점의 robot pose가 log에 저장되지 않는다.
+- class label이 운영자 UI에 그대로 노출될 수 있다.
 
 **권장**
 - `DetectionLogEntry`에 `pose?: Pose`를 추가한다.
 - `useAIStream`에서 log 생성 시 현재 pose snapshot을 함께 저장한다.
 - Alert card는 raw BBox 대신 `X / Y` 좌표를 우선 표시한다.
 - BBox는 필요하면 tooltip 또는 debug view로만 이동한다.
+- card 문구는 `person` 대신 "Detected" 기준으로 통일한다.
 
 **완료 조건**
 - [ ] detection log에 pose snapshot 저장
 - [ ] Alert card에 map location 표시
 - [ ] raw BBox 직접 노출 제거 또는 debug 처리
+- [ ] Alert card에서 `person` label 직접 노출 제거
 
 ---
 
-### 6. snapshot 실패 원인이 UI에 드러나지 않음
+### 10. snapshot 실패 원인이 UI에 드러나지 않음
 
 **파일**: `src/hooks/useAIStream.ts`, `src/hooks/useVideoCapture.ts`, `src/components/history/DetailModal.tsx`
 
@@ -167,7 +280,7 @@
 
 ---
 
-### 7. History filter 정책이 실제 로그 정책과 맞지 않음
+### 11. History filter 정책이 실제 로그 정책과 맞지 않음
 
 **파일**: `src/pages/History.tsx`, `src/components/history/FilterBar.tsx`
 
@@ -175,20 +288,22 @@
 - 실제 `useAIStream`은 `class === "person"`일 때만 detection log를 저장한다.
 - demo data와 filter에는 `"none"` 항목/옵션이 남아 있다.
 - `operator` filter는 값은 저장되지만 실제 필터링에 사용되지 않는다.
+- 새 UI 요구사항상 operator-facing 화면에서는 `person` class label을 제거해야 한다.
 
 **권장**
 - person-only 로그 정책을 유지한다면 demo data와 filter에서 `"none"`을 제거한다.
+- class label을 화면에서 제거한다면 class filter도 제거한다.
 - operator 데이터가 없다면 operator filter UI를 제거한다.
 - 장기적으로 operator를 쓰려면 `DetectionLogEntry.operator`를 추가하고 저장 경로까지 연결한다.
 
 **완료 조건**
 - [ ] demo data의 `class: "none"` 제거
-- [ ] FilterBar의 `None` option 제거 또는 실제 로그 정책 변경
+- [ ] class filter 제거 또는 내부-only 정책으로 정리
 - [ ] operator filter 제거 또는 실제 필터 조건 연결
 
 ---
 
-### 8. False Positive 상태가 세션 내 메모리에만 있음
+### 12. False Positive 상태가 세션 내 메모리에만 있음
 
 **파일**: `src/pages/History.tsx`, `src/components/history/DetailModal.tsx`
 
@@ -208,7 +323,7 @@
 
 ---
 
-### 9. TopBar latency 표시가 spec과 맞지 않음
+### 13. TopBar latency 표시가 spec과 맞지 않음
 
 **파일**: `src/components/layout/TopBar.tsx`, `src/components/settings/DiagnosticsMonitor.tsx`, `src/store/robotStore.ts`
 
@@ -227,7 +342,7 @@
 
 ---
 
-### 10. E-stop 성공/실패 피드백이 약함
+### 14. E-stop 성공/실패 피드백이 약함
 
 **파일**: `src/components/dashboard/DriveController.tsx`
 
@@ -248,7 +363,7 @@
 
 ---
 
-### 11. bbox 좌표계가 고정 해상도 가정에 묶여 있음
+### 15. bbox 좌표계가 고정 해상도 가정에 묶여 있음
 
 **파일**: `src/components/dashboard/AIOverlay.tsx`
 
@@ -268,7 +383,7 @@
 
 ## Low: 정리/문서화
 
-### 12. confidence 단위 문서 불일치
+### 16. confidence 단위 문서 불일치
 
 **파일**: `README.md`, `docs/AGENTS.md`, `docs/specs/API_DETAILS.md`
 
@@ -287,7 +402,7 @@
 
 ---
 
-### 13. MiniMap은 Phase 3 보류로 명확히 표시
+### 17. MiniMap은 Phase 3 보류로 명확히 표시
 
 **파일**: `src/components/dashboard/MiniMap.tsx`, `docs/specs/IMPLEMENTATION_PHASES.md`, `docs/specs/UI_DETAILS.md`
 
@@ -305,16 +420,21 @@
 
 ## 권장 작업 순서
 
-1. `StoragePolicy`를 `useAIStream` 캡처 경로에 연결
-2. `CriticalAlarmOverlay` 오디오 알람과 settings 값 연결
-3. `AIStatusPanel` FREEZE 버튼 연결
-4. `StorageSettings` destructive action 구현 또는 disabled 처리
-5. `AlertFeed` pose 연동 및 raw BBox 표시 정리
-6. History filter/demo/false positive persistence 정리
-7. TopBar latency 표시 구현 또는 spec 조정
-8. 실제 Jetson/rosbridge 환경에서 ROS, camera, AI stream smoke test
-9. bbox 좌표/캡처 결과를 desktop/mobile viewport에서 시각 검증
-10. README/AGENTS/API_DETAILS confidence 단위 정리
+1. Jetson CSV log append/read API 계약 확정
+2. frontend detection log를 Jetson CSV 저장/불러오기 흐름에 연결
+3. manual drive를 press-and-hold 반복 publish 방식으로 변경
+4. Auto Patrol UI/state 제거
+5. detection UI에서 `person` label 제거 후 "Detected" 문구로 통일
+6. `StoragePolicy`를 `useAIStream` 캡처 경로에 연결
+7. `CriticalAlarmOverlay` 오디오 알람과 settings 값 연결
+8. `AIStatusPanel` FREEZE 버튼 연결
+9. `StorageSettings` destructive action 구현 또는 disabled 처리
+10. `AlertFeed` pose 연동 및 raw BBox 표시 정리
+11. History filter/demo/false positive persistence 정리
+12. TopBar latency 표시 구현 또는 spec 조정
+13. 실제 Jetson/rosbridge 환경에서 ROS, camera, AI stream smoke test
+14. bbox 좌표/캡처 결과를 desktop/mobile viewport에서 시각 검증
+15. README/AGENTS/API_DETAILS confidence 단위 정리
 
 ## 통합 검증 체크리스트
 
@@ -324,16 +444,24 @@
 - [ ] rosbridge up 후 자동 재연결 및 `rosConnected=true`
 - [ ] `/battery_state` 수신 시 TopBar battery 반영
 - [ ] `/amcl_pose` 수신 시 store pose 반영
-- [ ] manual forward/back/left/right가 `/cmd_vel` publish
+- [ ] manual forward/back/left/right를 누르는 동안 `/cmd_vel` 반복 publish
+- [ ] manual control 버튼을 떼면 zero velocity publish
+- [ ] pointer cancel/blur/visibilitychange 시 robot 정지
+- [ ] Auto Patrol 버튼과 auto mode 전환 경로 제거
 - [ ] E-stop이 연결 상태에서 zero velocity publish
 - [ ] E-stop 성공/실패 feedback 표시
 - [ ] AI stream disconnect 후 3초 재연결
 - [ ] detection log가 3초 throttle로 쌓임
+- [ ] detection log가 Jetson CSV에 append됨
+- [ ] History 진입 시 Jetson CSV 누적 log를 불러옴
+- [ ] 앱 재접속 후에도 이전 detection log 확인 가능
 - [ ] `storagePolicy === "original"`일 때 delayed snapshot skip
 - [ ] `storagePolicy === "original+inverted"`일 때 delayed snapshot 저장
 - [ ] snapshot CORS 실패 시 UI가 깨지지 않고 원인이 표시됨
 - [ ] audio alarm toggle/volume이 CriticalAlarmOverlay에 반영됨
 - [ ] FREEZE 버튼 클릭 시 현재 프레임 캡처
+- [ ] bbox overlay에 `person` 대신 "Detected" 표시
+- [ ] AlertFeed/History에서 `person` class label 직접 노출 없음
 - [ ] AlertCard에 pose 좌표 표시
 - [ ] History demo/filter 정책이 person-only 로그 정책과 일치
 - [ ] false positive 상태가 페이지 재방문 후 유지
