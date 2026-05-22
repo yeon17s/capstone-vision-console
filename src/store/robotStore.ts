@@ -1,7 +1,5 @@
 import { create } from "zustand";
 
-export type DriveMode = "auto" | "manual";
-
 export interface BBox {
   x: number;
   y: number;
@@ -38,7 +36,6 @@ interface RobotState {
   aiConnected: boolean;
   cameraConnected: boolean;
   fastapiConnected: boolean;
-  driveMode: DriveMode;
   batteryPercent: number;
   pose: Pose;
   detection: Detection;
@@ -49,7 +46,6 @@ interface RobotState {
   historyLog: DetectionLogEntry[];
 
   setConnectionStatus: (key: ConnectionKey, value: boolean) => void;
-  setDriveMode: (driveMode: DriveMode) => void;
   setBatteryPercent: (batteryPercent: number) => void;
   setPose: (pose: Pose) => void;
   setDetection: (detection: Detection) => void;
@@ -76,7 +72,6 @@ const useRobotStore = create<RobotState>((set) => ({
   aiConnected: false,
   cameraConnected: false,
   fastapiConnected: false,
-  driveMode: "manual",
   batteryPercent: 0,
   pose: { x: 0, y: 0, yaw: 0 },
   detection: initialDetection,
@@ -84,7 +79,6 @@ const useRobotStore = create<RobotState>((set) => ({
   historyLog: [],
 
   setConnectionStatus: (key, value) => set({ [key]: value }),
-  setDriveMode: (driveMode) => set({ driveMode }),
   setBatteryPercent: (batteryPercent) => set({ batteryPercent }),
   setPose: (pose) => set({ pose }),
   setDetection: (detection) => set({ detection }),

@@ -37,7 +37,6 @@ interface AIStatusPanelProps {
 
 export default function AIStatusPanel({ inverted = false }: AIStatusPanelProps) {
   const detection = useRobotStore((s) => s.detection);
-  const driveMode = useRobotStore((s) => s.driveMode);
 
   const frameDelayMs = detection.frameDelayMs;
   const frameDelayToneClass = getFrameDelayTone(frameDelayMs);
@@ -81,8 +80,8 @@ export default function AIStatusPanel({ inverted = false }: AIStatusPanelProps) 
         {/* Current Mode */}
         <StatusCell
           label="Current Mode"
-          value={driveMode === "auto" ? "Auto" : "Manual"}
-          valueClass={driveMode === "auto" ? "text-mission-active" : "text-mission-info"}
+          value="Manual"
+          valueClass="text-mission-info"
         />
 
         {/* Frame Delay + FPS */}
