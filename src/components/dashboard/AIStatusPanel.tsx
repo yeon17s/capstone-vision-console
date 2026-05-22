@@ -33,9 +33,10 @@ function StatusCell({ label, value, valueClass = "text-mission-text" }: StatusCe
 
 interface AIStatusPanelProps {
   inverted?: boolean;
+  onFreeze?: () => void;
 }
 
-export default function AIStatusPanel({ inverted = false }: AIStatusPanelProps) {
+export default function AIStatusPanel({ inverted = false, onFreeze }: AIStatusPanelProps) {
   const detection = useRobotStore((s) => s.detection);
 
   const frameDelayMs = detection.frameDelayMs;
@@ -101,7 +102,7 @@ export default function AIStatusPanel({ inverted = false }: AIStatusPanelProps) 
         {/* Freeze Frame */}
         <div className="flex min-h-[88px] flex-col items-center justify-center gap-1.5 px-3 py-3">
           <Typography variant="overline" className="tracking-[0.14em]">Freeze Frame</Typography>
-          <Button variant="panel" size="sm">
+          <Button variant="panel" size="sm" onClick={onFreeze}>
             <Typography as="span" variant="controlStrong" className="tracking-[0.12em]">FREEZE</Typography>
           </Button>
         </div>

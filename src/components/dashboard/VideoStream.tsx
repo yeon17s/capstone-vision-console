@@ -6,7 +6,7 @@ import useRobotStore from "../../store/robotStore";
 interface VideoStreamProps {
   imgRef: React.RefObject<HTMLImageElement | null>;
   inverted: boolean;
-  onToggleInvert: () => void;
+  onToggleInvert?: () => void;
 }
 
 export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoStreamProps) {
@@ -18,7 +18,7 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
     function handleKeyDown(e: KeyboardEvent) {
       if (e.code === "Space" && e.target === document.body) {
         e.preventDefault();
-        onToggleInvert();
+        onToggleInvert?.();
       }
     }
     document.addEventListener("keydown", handleKeyDown);
@@ -55,6 +55,7 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
               : "border-[var(--color-accent-yellow)]",
           ].join(" ")}
           onClick={onToggleInvert}
+          style={onToggleInvert ? undefined : { pointerEvents: "none", opacity: 0.4 }}
         >
           <Typography variant="overline" className="tracking-[0.14em]">
             {inverted ? "INVERTED (Spacebar)" : "RGB (Spacebar)"}

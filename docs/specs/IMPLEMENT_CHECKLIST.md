@@ -78,9 +78,9 @@
 - `FREEZE` 버튼이 렌더링되지만 `onClick`이 없다.
 
 **완료 조건**
-- [ ] FREEZE 클릭 시 현재 프레임 캡처
-- [ ] 캡처 결과를 overlay, modal, 또는 별도 preview로 표시
-- [ ] 캡처 실패 시 사용자 피드백 표시
+- [x] FREEZE 클릭 시 현재 프레임 캡처
+- [x] 캡처 결과를 overlay, modal, 또는 별도 preview로 표시
+- [x] 캡처 실패 시 사용자 피드백 표시
 
 ---
 
