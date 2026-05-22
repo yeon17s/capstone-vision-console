@@ -93,11 +93,11 @@
 - "720 MB", "> 30 Days" 값은 placeholder다.
 
 **완료 조건**
-- [ ] 미구현 상태라면 버튼 disabled 및 "Not available" 표시
+- [x] 미구현 상태라면 버튼 disabled 및 "Not available" 표시
 - [ ] 구현 시 Clear Local Cache가 runtime/local pending/history cache 정리
 - [ ] 구현 시 Delete Old Logs가 기준일 이전 log 제거
 - [ ] 삭제 전 확인 dialog 또는 undo 제공
-- [ ] placeholder 용량 표시 제거 또는 실측값으로 교체
+- [x] placeholder 용량 표시 제거 또는 실측값으로 교체
 
 ## Medium: 기능/운영 품질 보완
 

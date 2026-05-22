@@ -47,11 +47,11 @@ export default function StorageSettings() {
       <div>
         <Typography variant="overline" className="mb-2 font-bold text-mission-text/90">Local Cleanup</Typography>
         <div className="flex flex-col gap-2">
-          <Button variant="warningOutline" size="md" className="w-full">
-            <Typography as="span" variant="controlStrong" tone="warning" className="normal-case tracking-normal">Clear Local Cache (720 MB)</Typography>
+          <Button variant="panel" size="md" className="w-full" disabled>
+            <Typography as="span" variant="controlStrong" tone="muted" className="normal-case tracking-normal">Clear Local Cache — Not available</Typography>
           </Button>
-          <Button variant="dangerOutline" size="md" className="w-full">
-            <Typography as="span" variant="controlStrong" tone="danger" className="normal-case tracking-normal">Delete Old Logs (&gt; 30 Days)</Typography>
+          <Button variant="panel" size="md" className="w-full" disabled>
+            <Typography as="span" variant="controlStrong" tone="muted" className="normal-case tracking-normal">Delete Old Logs — Not available</Typography>
           </Button>
         </div>
       </div>
