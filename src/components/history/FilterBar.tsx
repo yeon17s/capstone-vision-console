@@ -4,17 +4,17 @@ import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import Field from "../ui/Field";
 import TextInput from "../ui/TextInput";
-import SelectInput from "../ui/SelectInput";
 import RangeField from "../ui/RangeField";
 
 interface FilterBarProps {
   filters: Filters;
   trendHeights: number[];
+  fetchStatus: "idle" | "loading" | "error";
   onChange: (f: Filters) => void;
   onApply: () => void;
 }
 
-export default function FilterBar({ filters, trendHeights, onChange, onApply }: FilterBarProps) {
+export default function FilterBar({ filters, trendHeights, fetchStatus, onChange, onApply }: FilterBarProps) {
   function set<K extends keyof Filters>(key: K, value: Filters[K]) {
     onChange({ ...filters, [key]: value });
   }
@@ -23,8 +23,19 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
     <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
       {/* Search & Filter */}
       <MissionPanel title="Search & Filter" bodyClassName="p-4">
+        {fetchStatus === "loading" && (
+          <Typography as="p" variant="overline" tone="subtle" className="mb-3 text-mission-text/50">
+            Loading history from Jetson…
+          </Typography>
+        )}
+        {fetchStatus === "error" && (
+          <Typography as="p" variant="overline" tone="subtle" className="mb-3 text-mission-warning">
+            Could not reach Jetson — showing runtime log only
+          </Typography>
+        )}
+
         <TextInput
-          placeholder="Search class, timestamp..."
+          placeholder="Search timestamp..."
           value={filters.search}
           onChange={(e) => set("search", e.target.value)}
           className="mb-3"
@@ -51,7 +62,7 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
         </Field>
 
         <RangeField
-          className="mb-3"
+          className="mb-4"
           label="Confidence Min"
           value={filters.confMin}
           valueLabel={`${filters.confMin}%`}
@@ -61,25 +72,6 @@ export default function FilterBar({ filters, trendHeights, onChange, onApply }: 
           maxLabel="100%"
           onChange={(e) => set("confMin", Number(e.target.value))}
         />
-
-        <Field label="Class" className="mb-3">
-          <SelectInput
-            value={filters.cls}
-            onChange={(e) => set("cls", e.target.value)}
-          >
-            <option value="">All Classes</option>
-            <option value="person">Person</option>
-            <option value="none">None</option>
-          </SelectInput>
-        </Field>
-
-        <Field label="Operator" className="mb-4">
-          <TextInput
-            placeholder="Text search"
-            value={filters.operator}
-            onChange={(e) => set("operator", e.target.value)}
-          />
-        </Field>
 
         <Button onClick={onApply} variant="infoOutline" size="md" className="w-full py-1.5">
           <Typography as="span" variant="controlStrong" tone="info">Apply Filter</Typography>
