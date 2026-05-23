@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from "react";
 import Typography from "../ui/Typography";
 import useRobotStore from "../../store/robotStore";
-
-const SRC_W = 640;
-const SRC_H = 480;
-const SRC_RATIO = SRC_W / SRC_H;
+import useSettingsStore, {
+  DEFAULT_FRAME_HEIGHT,
+  DEFAULT_FRAME_WIDTH,
+  isValidFrameDimension,
+} from "../../store/settingsStore";
 
 interface RenderedRect {
   left: number;
@@ -15,21 +16,25 @@ interface RenderedRect {
 
 // object-cover: 비율 유지하며 컨테이너를 꽉 채움 → 이미지가 crop됨
 // 렌더된 이미지 크기는 컨테이너보다 크고, 오프셋은 음수(중앙 정렬로 crop)
-function getRenderedRect(containerW: number, containerH: number): RenderedRect {
+function getRenderedRect(containerW: number, containerH: number, srcRatio: number): RenderedRect {
   const containerRatio = containerW / containerH;
-  if (containerRatio > SRC_RATIO) {
+  if (containerRatio > srcRatio) {
     // 컨테이너가 더 넓음 → 가로로 꽉 채우고 세로가 crop됨
-    const renderedH = containerW / SRC_RATIO;
+    const renderedH = containerW / srcRatio;
     return { left: 0, top: (containerH - renderedH) / 2, width: containerW, height: renderedH };
   } else {
     // 컨테이너가 더 좁음 → 세로로 꽉 채우고 가로가 crop됨
-    const renderedW = containerH * SRC_RATIO;
+    const renderedW = containerH * srcRatio;
     return { left: (containerW - renderedW) / 2, top: 0, width: renderedW, height: containerH };
   }
 }
 
 export default function AIOverlay() {
   const detection = useRobotStore((s) => s.detection);
+  const frameWidth  = useSettingsStore((s) => s.frameWidth);
+  const frameHeight = useSettingsStore((s) => s.frameHeight);
+  const sourceW = isValidFrameDimension(frameWidth) ? frameWidth : DEFAULT_FRAME_WIDTH;
+  const sourceH = isValidFrameDimension(frameHeight) ? frameHeight : DEFAULT_FRAME_HEIGHT;
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
@@ -45,11 +50,12 @@ export default function AIOverlay() {
   }, []);
 
   const isVisible = detection.class === "person";
+  const srcRatio = sourceW / sourceH;
   const { left: imgLeft, top: imgTop, width: imgW, height: imgH } =
-    getRenderedRect(containerSize.w, containerSize.h);
+    getRenderedRect(containerSize.w, containerSize.h, srcRatio);
 
-  const scaleX = imgW / SRC_W;
-  const scaleY = imgH / SRC_H;
+  const scaleX = imgW / sourceW;
+  const scaleY = imgH / sourceH;
 
   const boxLeft = imgLeft + detection.bbox.x * scaleX;
   const boxTop = imgTop + detection.bbox.y * scaleY;

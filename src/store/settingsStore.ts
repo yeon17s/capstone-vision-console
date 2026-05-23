@@ -8,6 +8,8 @@ interface SettingsData {
   audioAlarmEnabled: boolean;
   volume: number;
   storagePolicy: "original" | "original+inverted";
+  frameWidth: number;   // AI source frame size — fallback when WS payload omits frame_width
+  frameHeight: number;
 }
 
 interface SettingsState extends SettingsData {
@@ -16,6 +18,12 @@ interface SettingsState extends SettingsData {
 }
 
 const STORAGE_KEY = "sentinel-ui-settings";
+export const DEFAULT_FRAME_WIDTH = 640;
+export const DEFAULT_FRAME_HEIGHT = 480;
+
+export function isValidFrameDimension(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
 
 const defaultSettings: SettingsData = {
   jetsonIp: "192.168.0.45",
@@ -25,6 +33,8 @@ const defaultSettings: SettingsData = {
   audioAlarmEnabled: true,
   volume: 70,
   storagePolicy: "original",
+  frameWidth: DEFAULT_FRAME_WIDTH,
+  frameHeight: DEFAULT_FRAME_HEIGHT,
 };
 
 function migrateSettings(raw: Partial<SettingsData>): Partial<SettingsData> {
@@ -36,7 +46,27 @@ function migrateSettings(raw: Partial<SettingsData>): Partial<SettingsData> {
   ) {
     migrated.confidenceThreshold = Math.round(migrated.confidenceThreshold * 100);
   }
+  if (!isValidFrameDimension(migrated.frameWidth)) {
+    delete migrated.frameWidth;
+  }
+  if (!isValidFrameDimension(migrated.frameHeight)) {
+    delete migrated.frameHeight;
+  }
   return migrated;
+}
+
+function toSettingsData(settings: SettingsData): SettingsData {
+  return {
+    jetsonIp: settings.jetsonIp,
+    rosbridgePort: settings.rosbridgePort,
+    fastapiUrl: settings.fastapiUrl,
+    confidenceThreshold: settings.confidenceThreshold,
+    audioAlarmEnabled: settings.audioAlarmEnabled,
+    volume: settings.volume,
+    storagePolicy: settings.storagePolicy,
+    frameWidth: settings.frameWidth,
+    frameHeight: settings.frameHeight,
+  };
 }
 
 function loadSettings(): SettingsData {
@@ -62,9 +92,9 @@ const useSettingsStore = create<SettingsState>((set, get) => ({
   hydrateSettings: () => set(loadSettings()),
 
   updateSettings: (updates) => {
-    const next: SettingsData = { ...get(), ...updates };
+    const next: SettingsData = { ...toSettingsData(get()), ...migrateSettings(updates) };
     persistSettings(next);
-    set(updates);
+    set(next);
   },
 }));
 

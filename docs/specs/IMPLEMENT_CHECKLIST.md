@@ -140,7 +140,7 @@
 - source frame size는 frontend에서 `640x480`으로 고정 가정한다.
 
 **완료 조건**
-- [ ] AI WebSocket payload에 `frame_width`, `frame_height` 포함하거나 frontend 설정값으로 분리
+- [x] AI WebSocket payload에 `frame_width`, `frame_height` 포함하거나 frontend 설정값으로 분리
 - [ ] 실제 stream에서 bbox 위치 검증
 - [ ] 16:9, 4:3, narrow viewport에서 overlay 위치 유지 확인
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import useRobotStore from "../store/robotStore";
-import useSettingsStore from "../store/settingsStore";
+import useSettingsStore, { isValidFrameDimension } from "../store/settingsStore";
 import { appendHistoryLog } from "../lib/historyApi";
 import type { DetectionLogEntry } from "../store/robotStore";
 import type { CaptureResult } from "./useVideoCapture";
@@ -68,6 +68,7 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
   const poseRef = useRef(useRobotStore.getState().pose);
   const jetsonIp = useSettingsStore((s) => s.jetsonIp);
   const fastapiUrl = useSettingsStore((s) => s.fastapiUrl);
+  const updateSettings = useSettingsStore((s) => s.updateSettings);
   const storagePolicy = useSettingsStore((s) => s.storagePolicy);
   const storagePolicyRef = useRef(storagePolicy);
   storagePolicyRef.current = storagePolicy;
@@ -169,7 +170,19 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
             bbox: { x: number; y: number; w: number; h: number };
             fps: number;
             frame_delay_ms: number;
+            frame_width?: number;
+            frame_height?: number;
           };
+
+          if (
+            isValidFrameDimension(data.frame_width) &&
+            isValidFrameDimension(data.frame_height)
+          ) {
+            const { frameWidth, frameHeight } = useSettingsStore.getState();
+            if (frameWidth !== data.frame_width || frameHeight !== data.frame_height) {
+              updateSettings({ frameWidth: data.frame_width, frameHeight: data.frame_height });
+            }
+          }
 
           const cls = data.class === "person" || data.class === "none" ? data.class : "none";
 
@@ -250,7 +263,7 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
       if (invertedSnapshotTimerRef.current) clearTimeout(invertedSnapshotTimerRef.current);
       wsRef.current?.close();
     };
-  }, [jetsonIp, setDetection, setConnectionStatus, pushDetectionLog, fastapiUrl]);
+  }, [jetsonIp, setDetection, setConnectionStatus, pushDetectionLog, fastapiUrl, updateSettings]);
 }
 
 export default useAIStream;
