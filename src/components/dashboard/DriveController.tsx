@@ -108,12 +108,12 @@ export default function DriveController() {
         : "READY";
 
   return (
-    <MissionPanel title="Robot Drive" bodyClassName="p-5">
-      <div className="flex gap-6">
+    <MissionPanel title="Robot Drive" bodyClassName="p-4">
+      <div className="flex gap-4">
         {/* Left: Joystick Controls */}
         <div className="flex-shrink-0">
           <div className="flex items-center justify-center">
-            <div className="relative h-48 w-48">
+            <div className="relative h-64 w-64">
               {/* Center joystick zone */}
               <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-mission-border bg-mission-bg shadow-mission-soft">
                 <div className="h-8 w-8 rounded-full border border-mission-text bg-mission-panel" />
@@ -126,9 +126,9 @@ export default function DriveController() {
                 onPointerDown={() => startDriveHold("forward")}
                 onPointerLeave={stopDriveHold}
                 disabled={driveDisabled}
-                className="absolute left-1/2 top-0 h-14 w-14 -translate-x-1/2 touch-none"
+                className="absolute left-1/2 top-0 h-[72px] w-[72px] -translate-x-1/2 touch-none"
               >
-                <Typography as="span" variant="metric">↑</Typography>
+                <Typography as="span" variant="display">↑</Typography>
               </Button>
 
               {/* Backward */}
@@ -138,9 +138,9 @@ export default function DriveController() {
                 onPointerDown={() => startDriveHold("backward")}
                 onPointerLeave={stopDriveHold}
                 disabled={driveDisabled}
-                className="absolute bottom-0 left-1/2 h-14 w-14 -translate-x-1/2 touch-none"
+                className="absolute bottom-0 left-1/2 h-[72px] w-[72px] -translate-x-1/2 touch-none"
               >
-                <Typography as="span" variant="metric">↓</Typography>
+                <Typography as="span" variant="display">↓</Typography>
               </Button>
 
               {/* Left */}
@@ -150,9 +150,9 @@ export default function DriveController() {
                 onPointerDown={() => startDriveHold("left")}
                 onPointerLeave={stopDriveHold}
                 disabled={driveDisabled}
-                className="absolute left-0 top-1/2 h-14 w-14 -translate-y-1/2 touch-none"
+                className="absolute left-0 top-1/2 h-[72px] w-[72px] -translate-y-1/2 touch-none"
               >
-                <Typography as="span" variant="metric">←</Typography>
+                <Typography as="span" variant="display">←</Typography>
               </Button>
 
               {/* Right */}
@@ -162,22 +162,22 @@ export default function DriveController() {
                 onPointerDown={() => startDriveHold("right")}
                 onPointerLeave={stopDriveHold}
                 disabled={driveDisabled}
-                className="absolute right-0 top-1/2 h-14 w-14 -translate-y-1/2 touch-none"
+                className="absolute right-0 top-1/2 h-[72px] w-[72px] -translate-y-1/2 touch-none"
               >
-                <Typography as="span" variant="metric">→</Typography>
+                <Typography as="span" variant="display">→</Typography>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Right: Manual mode status & E-Stop */}
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="rounded-lg border border-mission-info bg-mission-info/10 px-4 py-3 text-center">
-            <Typography as="span" variant="controlStrong" tone="info" className="tracking-[0.12em]">
-              Manual<br />Mode
+        <div className="flex flex-1 flex-col justify-between gap-4">
+          <div className="rounded-lg border border-mission-info bg-mission-info/10 px-3 py-2 text-center">
+            <Typography as="span" variant="overline" tone="info" className="font-bold tracking-[0.12em]">
+              Manual Mode
             </Typography>
-            <Typography as="p" variant="overline" className="mt-2 text-mission-text/45">
-              Hold direction to move
+            <Typography as="p" variant="overline" className="mt-0.5 text-mission-text/45">
+              Hold to move
             </Typography>
           </div>
 
@@ -187,18 +187,16 @@ export default function DriveController() {
             size="critical"
             onClick={handleEStop}
             className={[
-              "w-full py-4",
+              "w-full flex-1 py-0",
               estopFeedback === "success" ? "ring-2 ring-mission-active/60" : "",
               estopFeedback === "error" || !rosConnected ? "ring-2 ring-mission-suspicious/50" : "",
             ].join(" ")}
           >
-            <Typography variant="display" tone="inverse">
+            <Typography variant="metric" tone="inverse">
               E-STOP
             </Typography>
-            <Typography variant="controlStrong" tone="inverse" className="mt-2 tracking-[0.26em]">
-              Emergency Stop
-            </Typography>
           </Button>
+
           <Typography
             as="p"
             variant="overline"
