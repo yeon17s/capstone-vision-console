@@ -1,5 +1,10 @@
 import * as ROSLIB from "roslib";
 
+interface TwistMsg {
+  linear:  { x: number; y: number; z: number };
+  angular: { x: number; y: number; z: number };
+}
+
 let rosInstance: ROSLIB.Ros | null = null;
 let cmdVelTopic: ROSLIB.Topic | null = null;
 
@@ -25,10 +30,11 @@ export function publishCmdVel(lx: number, az: number): boolean {
     });
   }
 
-  cmdVelTopic.publish({
+  const msg: TwistMsg = {
     linear:  { x: lx, y: 0, z: 0 },
     angular: { x: 0,  y: 0, z: az },
-  } as any);
+  };
+  cmdVelTopic.publish(msg as unknown as object);
 
   return true;
 }

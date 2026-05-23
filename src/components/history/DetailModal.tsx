@@ -133,7 +133,6 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         <div className="flex flex-col gap-2 rounded-[16px] border border-mission-border bg-mission-bg px-4 py-3">
           <MetaRow label="Timestamp"   value={entry.timestamp} mono />
           <MetaRow label="Detection"   value="Detected" accent />
-          <MetaRow label="Mode"        value={entry.mode ?? "RGB"} accent />
           {entry.pose && (
             <MetaRow
               label="Location"

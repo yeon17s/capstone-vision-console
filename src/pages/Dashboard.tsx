@@ -19,7 +19,7 @@ type FreezeState =
   | { kind: "ok"; dataUrl: string }
   | { kind: "error"; message: string };
 
-const FREEZE_ERROR_LABEL: Record<Exclude<SnapshotStatus, "ok" | "skipped">, string> = {
+const FREEZE_ERROR_LABEL: Partial<Record<SnapshotStatus, string>> = {
   cors_error:   "Capture unavailable (CORS — stream server does not send CORS headers)",
   canvas_error: "Capture unavailable (canvas error)",
   unavailable:  "Capture unavailable (no active frame)",
@@ -43,7 +43,7 @@ export default function Dashboard({ onCaptureReady }: DashboardProps) {
     } else {
       setFrozen({
         kind: "error",
-        message: FREEZE_ERROR_LABEL[result.status as Exclude<SnapshotStatus, "ok" | "skipped">] ?? "Capture unavailable",
+        message: FREEZE_ERROR_LABEL[result.status] ?? "Capture unavailable",
       });
     }
   }, [capture, inverted]);

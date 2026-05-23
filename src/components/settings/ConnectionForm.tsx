@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import useSettingsStore from "../../store/settingsStore";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
@@ -15,6 +15,13 @@ export default function ConnectionForm() {
     fastapiUrl,
   });
   const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   function handleSave() {
     const port = parseInt(draft.rosbridgePort, 10);
@@ -24,7 +31,8 @@ export default function ConnectionForm() {
       fastapiUrl: draft.fastapiUrl,
     });
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setSaved(false), 2000);
   }
 
   return (

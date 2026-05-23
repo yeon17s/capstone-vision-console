@@ -4,6 +4,19 @@ import useRobotStore from "../store/robotStore";
 import useSettingsStore from "../store/settingsStore";
 import { setRos } from "../lib/rosClient";
 
+interface BatteryStateMsg {
+  percentage: number;
+}
+
+interface AmclPoseMsg {
+  pose: {
+    pose: {
+      position: { x: number; y: number; z: number };
+      orientation: { x: number; y: number; z: number; w: number };
+    };
+  };
+}
+
 const RECONNECT_DELAY_MS = 3000;
 
 export default function useRosConnection() {
@@ -40,8 +53,9 @@ export default function useRosConnection() {
           name: "/battery_state",
           messageType: "sensor_msgs/BatteryState",
         });
-        batterySub.subscribe((msg: any) => {
-          setBatteryPercent(Math.round(msg.percentage * 100));
+        batterySub.subscribe((msg) => {
+          const { percentage } = msg as BatteryStateMsg;
+          setBatteryPercent(Math.round(percentage * 100));
         });
 
         poseSub = new ROSLIB.Topic({
@@ -49,9 +63,9 @@ export default function useRosConnection() {
           name: "/amcl_pose",
           messageType: "geometry_msgs/PoseWithCovarianceStamped",
         });
-        poseSub.subscribe((msg: any) => {
-          const { x, y } = msg.pose.pose.position;
-          const { z, w } = msg.pose.pose.orientation;
+        poseSub.subscribe((msg) => {
+          const { x, y } = (msg as AmclPoseMsg).pose.pose.position;
+          const { z, w } = (msg as AmclPoseMsg).pose.pose.orientation;
           setPose({ x, y, yaw: 2 * Math.atan2(z, w) });
         });
       });

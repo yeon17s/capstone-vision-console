@@ -43,7 +43,7 @@ export default function AIStatusPanel({ inverted = false, onFreeze }: AIStatusPa
   const frameDelayToneClass = getFrameDelayTone(frameDelayMs);
   const frameDelayBadgeTone = getFrameDelayBadgeTone(frameDelayMs);
 
-  const confidenceTone =
+  const confidenceTone: "success" | "warning" | "danger" =
     detection.confidence >= 80 ? "success" : detection.confidence >= 50 ? "warning" : "danger";
 
   return (
