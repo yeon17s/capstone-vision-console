@@ -1,31 +1,39 @@
-# 🤖 Capstone Vision Console
+# Capstone Vision Console
 
-TurtleBot3 모니터링 및 RCOD 기반 위장 객체 탐지를 위한 실시간 시각화 및 제어 UI
+TurtleBot3 모니터링과 RCOD 기반 위장 객체 탐지를 위한 실시간 시각화·제어 UI입니다.
 
 ---
 
-## 📋 빠른 시작
+> MVP frontend 구현은 완료된 상태입니다. 실환경 연결 전
+> [`docs/specs/IMPLEMENT_CHECKLIST.md`](docs/specs/IMPLEMENT_CHECKLIST.md)의
+> **ROS 담당자 연동 테스트 체크리스트**를 먼저 확인하세요.
+> WebSocket 페이로드 계약, FastAPI 엔드포인트, 현장 검증 항목이 정리되어 있습니다.
 
-### 1️⃣ 설치
+---
+
+## 빠른 시작
+
+### 요구사항
+
+- Node.js 18 이상
+- npm
+
+### 설치
 
 ```bash
-# 저장소 클론
 git clone https://github.com/yeon17s/capstone-vision-console
 cd capstone-vision-console
-
-# 의존성 설치
 npm install
 ```
 
-### 2️⃣ 개발 서버 실행
+### 개발 서버 실행
 
 ```bash
 npm run dev
+# http://localhost:5173
 ```
 
-브라우저에서 `http://localhost:5173` 에 접속
-
-### 3️⃣ 프로덕션 빌드
+### 프로덕션 빌드
 
 ```bash
 npm run build
@@ -34,247 +42,214 @@ npm run preview
 
 ---
 
-## 🏗️ 프로젝트 구조
+## 프로젝트 구조
 
 ```
 capstone-vision-console/
 ├── src/
-│   ├── components/          # React 컴포넌트
-│   │   ├── dashboard/       # Dashboard 페이지 컴포넌트
-│   │   ├── history/         # History 페이지 컴포넌트
-│   │   ├── settings/        # Settings 페이지 컴포넌트
-│   │   └── ui/              # 공통 UI 컴포넌트
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useRosConnection.ts    # ROS Bridge 연결
-│   │   ├── useAIStream.ts         # AI WebSocket 스트림
-│   │   └── useBattery.ts          # 배터리 정보
+│   ├── components/
+│   │   ├── dashboard/
+│   │   │   ├── AIOverlay.tsx          # bbox 오버레이 (object-cover 보정)
+│   │   │   ├── AIStatusPanel.tsx      # FPS / Frame Delay / Confidence / FREEZE
+│   │   │   ├── AlertFeed.tsx          # 실시간 Detection 카드 피드
+│   │   │   ├── CriticalAlarmOverlay.tsx  # 임계값 초과 시 빨간 테두리 알람
+│   │   │   ├── DriveController.tsx    # 방향 버튼 + E-Stop
+│   │   │   ├── MiniMap.tsx            # Phase 3 placeholder
+│   │   │   └── VideoStream.tsx        # MJPEG 스트림 + 반전 토글
+│   │   ├── history/
+│   │   │   ├── DetailModal.tsx        # 선택 row 상세 (스냅샷 / 메타데이터)
+│   │   │   ├── DetectionTable.tsx     # Detection 이력 테이블
+│   │   │   └── FilterBar.tsx          # 검색 / 날짜 / Confidence 필터
+│   │   ├── settings/
+│   │   │   ├── AIConfig.tsx           # Confidence threshold / Audio alarm
+│   │   │   ├── ConnectionForm.tsx     # Robot IP / Rosbridge Port / Backend URL
+│   │   │   ├── DiagnosticsMonitor.tsx # 연결 상태 진단 패널
+│   │   │   └── StorageSettings.tsx    # Storage policy 선택
+│   │   └── ui/                        # 공통 UI 컴포넌트 (Button, Typography 등)
+│   ├── hooks/
+│   │   ├── useAIStream.ts             # AI WebSocket 연결 / 재연결 / Detection log
+│   │   ├── useAlarmSound.ts           # Detection 발생 시 오디오 알람
+│   │   ├── useFastapiPing.ts          # FastAPI /ping 폴링 및 latency 측정
+│   │   ├── useRosConnection.ts        # ROS Bridge 연결 / battery / pose 구독
+│   │   └── useVideoCapture.ts         # canvas 기반 프레임 캡처
 │   ├── lib/
-│   │   └── rosClient.ts           # ROS 클라이언트 관리
-│   ├── store/               # Zustand 상태 관리
-│   │   ├── robotStore.ts          # 로봇 상태
-│   │   └── settingsStore.ts       # 설정 상태
-│   ├── pages/               # 페이지 컴포넌트
-│   │   ├── Dashboard.tsx
-│   │   ├── History.tsx
-│   │   └── Settings.tsx
+│   │   ├── confidenceTone.ts          # confidence → UI tone 변환 유틸
+│   │   ├── cx.ts                      # className 병합 유틸
+│   │   ├── historyApi.ts              # FastAPI history append / fetch
+│   │   └── rosClient.ts               # ROS /cmd_vel publish
+│   ├── pages/
+│   │   ├── Dashboard.tsx              # 카메라 + AI 상태 + 드라이브 제어
+│   │   ├── History.tsx                # Detection 이력 조회 / 필터
+│   │   └── Settings.tsx               # 연결 설정 / 진단 / AI 설정
+│   ├── store/
+│   │   ├── robotStore.ts              # ROS 연결·Detection·로그 상태 (Zustand)
+│   │   └── settingsStore.ts           # 사용자 설정 + localStorage 영속성
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
 ├── docs/
-│   ├── AGENTS.md                           # 구현 규칙
+│   ├── AGENTS.md                      # 구현 규칙 및 상태 계약
 │   └── specs/
-│       ├── API_DETAILS.md                  # API 명세
-│       ├── IMPLEMENTATION_PHASES.md        # 구현 단계
-│       ├── UI_DETAILS.md                   # UI 상세
-│       └── WIREFRAME_NOTES.md              # 와이어프레임
+│       ├── IMPLEMENT_CHECKLIST.md     # 구현 점검 및 연동 테스트 체크리스트
+│       ├── API_DETAILS.md             # API 명세
+│       ├── IMPLEMENTATION_PHASES.md   # 구현 단계별 목표
+│       ├── UI_DETAILS.md              # UI 상세
+│       └── WIREFRAME_NOTES.md         # 와이어프레임
+├── public/
+│   └── sounds/
+│       └── alarm.mp3                  # Detection 알람 사운드
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
-├── tailwind.config.js
-└── README.md
+└── tailwind.config.js
 ```
 
 ---
 
-## 🔌 외부 시스템 연동
+## 외부 시스템 연동
 
-### 필수 설정 (Settings 페이지)
+Settings 페이지에서 아래 값을 설정합니다. 설정은 `localStorage`에 자동 저장됩니다.
 
-**Connection Form:**
-- **Robot IP**: TurtleBot Jetson 보드 IP (기본값: `192.168.0.45`)
-- **Rosbridge Port**: ROS Bridge WebSocket 포트 (기본값: `9090`)
-- **Backend URL**: FastAPI 백엔드 주소 (기본값: `http://121.156.245.81:8000`)
+| 항목 | 기본값 | 설명 |
+|------|--------|------|
+| Robot IP | `192.168.0.45` | Jetson 보드 IP |
+| Rosbridge Port | `9090` | ROS Bridge WebSocket 포트 |
+| Backend URL | `http://121.156.245.81:8000` | FastAPI 서버 주소 |
 
-설정은 자동으로 `localStorage` 에 저장됩니다.
+연동 대상:
 
----
-
-## 로컬 테스트 방법
-
-### 🤖 로봇
-
-#### Step 1: Jetson에서 web_video_server 실행
-```bash
-# Jetson에서
-roslaunch web_video_server web_video_server.launch
-# http://{jetson-ip}:8080/stream?topic=/cv_camera/image_raw 에서 스트림 확인
-```
-
-#### Step 2: Console Settings에서 Robot IP 설정
-1. Settings 페이지 → "System & Network Configuration"
-2. Robot IP 입력 (예: `192.168.0.45`)
-3. "Save & Apply" 클릭
-
-#### Step 3: 카메라 스트림 확인
-- Dashboard 페이지의 비디오 영역에서 카메라 스트림 표시 확인
-
-#### Step 4: ROS 연결 테스트
-현재는 수동으로 다음을 구현해야 합니다:
-
-```typescript
-// src/hooks/useRosConnection.ts 에서 구현 필요
-// 1. ROS Bridge WebSocket 연결
-const ros = new ROS({
-  url: `ws://${jetsonIp}:${rosbridgePort}`
-});
-
-// 2. /battery_state 구독
-const batteryListener = new ROSLIB.Topic({
-  ros: ros,
-  name: '/battery_state',
-  messageType: 'sensor_msgs/BatteryState'
-});
-batteryListener.subscribe((message) => {
-  robotStore.setBatteryPercent(message.percentage * 100);
-});
-
-// 3. /cmd_vel 발행
-const cmdVel = new ROSLIB.Topic({
-  ros: ros,
-  name: '/cmd_vel',
-  messageType: 'geometry_msgs/Twist'
-});
-```
+| 대상 | 주소 형식 | 용도 |
+|------|-----------|------|
+| MJPEG stream | `http://<jetsonIp>:8080/stream?topic=/cv_camera/image_raw` | Dashboard 영상 표시 |
+| ROS Bridge | `ws://<jetsonIp>:<rosbridgePort>` | 배터리/pose 구독, `/cmd_vel` 발행 |
+| AI WebSocket | `ws://<jetsonIp>:8000/ws/ai_stream` | Detection payload 수신 |
+| FastAPI | `<fastapiUrl>` | ping latency, history append/fetch |
 
 ---
 
+## API 엔드포인트
 
-### 🧠 AI
+### 카메라 스트림 (MJPEG)
 
-#### Step 1: FastAPI 백엔드 실행
-```bash
-# Jetson 또는 별도 서버에서
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-#### Step 2: Console Settings에서 Backend URL 설정
-1. Settings 페이지 → "System & Network Configuration"
-2. Backend URL 입력 (예: `http://121.156.245.81:8000`)
-3. "Save & Apply" 클릭
-
-#### Step 3: AI 스트림 테스트
-현재는 수동으로 다음을 구현해야 합니다:
-
-```typescript
-// src/hooks/useAIStream.ts 에서 구현 필요
-const useAIStream = () => {
-  const { updateSettings } = useSettingsStore();
-  const { setDetection, pushDetectionLog } = useRobotStore();
-
-  useEffect(() => {
-    const aiWsUrl = `ws://${jetsonIp}:8000/ws/ai_stream`;
-    const ws = new WebSocket(aiWsUrl);
-
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      
-      // 메시지 파싱 (스키마 확인 후)
-      const detection = {
-        class: message.class,
-        confidence: message.confidence,
-        bbox: message.bbox,
-        fps: message.fps,
-        frameDelayMs: message.frame_delay_ms
-      };
-
-      // 임계값 필터링
-      if (message.confidence >= (confidenceThreshold * 100)) {
-        setDetection(detection);
-        pushDetectionLog({
-          ...detection,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        setDetection({ ...detection, class: 'none' });
-      }
-    };
-
-    return () => ws.close();
-  }, []);
-};
-```
-
----
-
-## 📊 상태 관리 (Zustand)
-
-### robotStore
-```typescript
-{
-  rosConnected: boolean;        // ROS Bridge 연결 상태
-  aiConnected: boolean;         // AI WebSocket 연결 상태
-  cameraConnected: boolean;     // 카메라 스트림 상태
-  driveMode: "manual" | "auto"; // 드라이브 모드
-  batteryPercent: number;       // 배터리 (0-100)
-  pose: { x, y, yaw };         // 로봇 위치 및 회전
-  detection: {
-    class: string;              // 감지 클래스 (또는 "none")
-    confidence: number;         // 신뢰도 (0-100)
-    bbox: { x, y, w, h };      // 바운딩박스
-    fps: number;               // 프레임률
-    frameDelayMs: number;      // 프레임 지연
-  };
-  detectionLog: [];            // 감지 이력 (최대 50개)
-}
-```
-
-### settingsStore
-```typescript
-{
-  jetsonIp: string;                    // 기본값: "192.168.0.45"
-  rosbridgePort: number;               // 기본값: 9090
-  fastapiUrl: string;                  // 기본값: "http://121.156.245.81:8000"
-  confidenceThreshold: number;         // 0-1 (기본값: 0.5)
-  audioAlarmEnabled: boolean;          // 기본값: true
-  volume: number;                      // 0-100 (기본값: 70)
-  storagePolicy: "original" | "original+inverted"; // 기본값: "original"
-}
-```
-
----
-
-## 📝 API 엔드포인트
-
-### MJPEG 스트림
 ```
 GET http://<jetsonIp>:8080/stream?topic=/cv_camera/image_raw
 ```
 
 ### ROS Bridge
+
 ```
-ws://<jetsonIp>:9090
+ws://<jetsonIp>:<rosbridgePort>
 ```
 
+구독 토픽:
+- `/battery_state` (`sensor_msgs/BatteryState`) — TopBar 배터리 표시
+- `/amcl_pose` (`geometry_msgs/PoseWithCovarianceStamped`) — Detection location 기록
+
+발행 토픽:
+- `/cmd_vel` (`geometry_msgs/Twist`) — 방향 버튼 hold 시 150ms 간격 publish, release 시 zero velocity
+
 ### AI WebSocket
+
 ```
 ws://<jetsonIp>:8000/ws/ai_stream
 ```
 
-### FastAPI
+백엔드 송신 형식:
+
+```json
+{
+  "timestamp": "2026-05-23T12:00:00.000000",
+  "class": "person",
+  "confidence": 87.3,
+  "bbox": { "x": 120, "y": 80, "w": 200, "h": 300 },
+  "fps": 25.0,
+  "frame_delay_ms": 45,
+  "frame_width": 640,
+  "frame_height": 480
+}
 ```
-GET  http://<fastapiUrl>/ping
-GET  http://<fastapiUrl>/api/history
-GET  http://<fastapiUrl>/api/settings/threshold
-POST http://<fastapiUrl>/api/settings/threshold
+
+- `confidence`: **0–100 퍼센트 스케일** (0–1 아님)
+- `class`: `"person"` 또는 `"none"`
+- `frame_width` / `frame_height`: 생략 시 640×480 fallback
+- `bbox`: `frame_width` × `frame_height` 기준 좌표
+
+### FastAPI
+
+```
+GET  <fastapiUrl>/ping
+GET  <fastapiUrl>/api/history
+POST <fastapiUrl>/api/history/log
+```
+
+- `GET /ping` — 200 OK 시 TopBar FastAPI 지시등 Connected + latency 표시
+- `GET /api/history` — History 페이지 진입 시 자동 호출, CSV 전체 조회
+- `POST /api/history/log` — Detection 발생 시 frontend가 자동 호출 (네트워크 단절 시 localStorage pending queue에 보관 후 재연결 시 drain)
+
+History row는 CSV 저장을 위한 flat JSON 형식입니다. `snapshot_status`는 원본 snapshot 캡처 여부를 나타내며 `"captured"` 또는 `"unavailable"` 값을 사용합니다.
+
+---
+
+## 상태 관리 (Zustand)
+
+### robotStore
+
+```typescript
+{
+  rosConnected: boolean;       // ROS Bridge 연결 상태
+  aiConnected: boolean;        // AI WebSocket 연결 상태
+  cameraConnected: boolean;    // 카메라 스트림 상태
+  fastapiConnected: boolean;   // FastAPI 연결 상태
+  batteryPercent: number;      // 배터리 (0–100)
+  latencyMs: number | null;    // FastAPI ping 왕복 시간 (null = 미측정)
+  pose: { x, y, yaw };        // 로봇 위치
+  detection: {
+    class: string;             // "person" | "none"
+    confidence: number;        // 0–100
+    bbox: { x, y, w, h };
+    fps: number;
+    frameDelayMs: number;
+  };
+  recentLog: DetectionLogEntry[];   // 세션 내 최근 50건 (AlertFeed 소스)
+  historyLog: DetectionLogEntry[];  // CSV + 세션 병합 전체 이력 (History 소스)
+}
+```
+
+### settingsStore
+
+```typescript
+{
+  jetsonIp: string;                            // 기본값: "192.168.0.45"
+  rosbridgePort: number;                       // 기본값: 9090
+  fastapiUrl: string;                          // 기본값: "http://121.156.245.81:8000"
+  confidenceThreshold: number;                 // 0–100 (기본값: 50)
+  audioAlarmEnabled: boolean;                  // 기본값: true
+  volume: number;                              // 0–100 (기본값: 70)
+  storagePolicy: "original" | "original+inverted";  // 기본값: "original"
+  frameWidth: number;                          // AI 소스 프레임 가로 (기본값: 640)
+  frameHeight: number;                         // AI 소스 프레임 세로 (기본값: 480)
+}
 ```
 
 ---
 
-## 🔗 관련 문서
+## 기술 스택
+
+| 분류 | 사용 기술 |
+|------|-----------|
+| Frontend | React 18 + TypeScript |
+| 상태 관리 | Zustand |
+| 스타일링 | Tailwind CSS |
+| 빌드 | Vite |
+| ROS 연동 | roslib |
+
+---
+
+## 관련 문서
 
 | 문서 | 설명 |
 |------|------|
-| [AGENTS.md](docs/AGENTS.md) | 구현 규칙 & 상태 계약 |
-| [API_DETAILS.md](docs/specs/API_DETAILS.md) | API 명세 |
+| [IMPLEMENT_CHECKLIST.md](docs/specs/IMPLEMENT_CHECKLIST.md) | 연동 테스트 체크리스트 (ROS 담당자용 포함) |
+| [AGENTS.md](docs/AGENTS.md) | 구현 규칙 및 상태 계약 |
+| [API_DETAILS.md](docs/specs/API_DETAILS.md) | API 명세 상세 |
 | [IMPLEMENTATION_PHASES.md](docs/specs/IMPLEMENTATION_PHASES.md) | 구현 단계별 목표 |
-
----
-
-## 🛠️ 기술 스택
-
-- **Frontend**: React 18 + TypeScript
-- **상태 관리**: Zustand
-- **스타일링**: Tailwind CSS
-- **빌드**: Vite
-- **ROS**: roslibjs (미설치, 필요 시 `npm install roslibjs`)
-
