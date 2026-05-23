@@ -126,9 +126,8 @@
 - 현재 TopBar에는 latency 값이 없다.
 
 **완료 조건**
-- [ ] `/ping` fetch 왕복 시간 측정 후 store에 저장하고 TopBar에 표시하거나,
-- [ ] latency 요구를 spec에서 제거/보류로 명시
-- [ ] `/ping` 실패 시 latency는 `--`로 표시
+- [x] `/ping` fetch 왕복 시간 측정 후 store에 저장하고 TopBar에 표시
+- [x] `/ping` 실패 시 latency는 `--`로 표시
 
 ---
 

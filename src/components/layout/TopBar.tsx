@@ -24,6 +24,7 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
   const fastapiConnected = useRobotStore((s) => s.fastapiConnected);
   const cameraConnected = useRobotStore((s) => s.cameraConnected);
   const batteryPercent  = useRobotStore((s) => s.batteryPercent);
+  const latencyMs       = useRobotStore((s) => s.latencyMs);
 
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-mission-border bg-mission-bg px-6 py-3">
@@ -59,11 +60,7 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
       </div>
 
       {/* Status Widgets */}
-      <div className="flex min-w-[500px] items-center justify-end gap-3 rounded-[18px] border border-mission-border p-1">
-        <div className="rounded-lg border border-mission-border bg-mission-panel px-3 py-2">
-          <Typography as="span" variant="monoStrong">○</Typography>
-        </div>
-
+      <div className="flex min-w-[500px] items-center justify-end gap-3 rounded-[18px]">
         <div className="flex items-center gap-3 rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
           <div className="flex gap-3">
             <StatusIndicator
@@ -105,6 +102,17 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
             tone={batteryPercent > 0 ? getBatteryTone(batteryPercent) : "muted"}
           >
             {batteryPercent > 0 ? `${batteryPercent}%` : "--"}
+          </Typography>
+        </div>
+
+        <div className="rounded-lg border border-mission-border bg-mission-panel px-4 py-2">
+          <Typography as="span" variant="controlStrong" className="tracking-[0.18em]">Latency:</Typography>{" "}
+          <Typography
+            as="span"
+            variant="monoStrong"
+            tone={latencyMs === null ? "muted" : latencyMs <= 100 ? "success" : latencyMs <= 300 ? "warning" : "danger"}
+          >
+            {latencyMs === null ? "--" : `${latencyMs}ms`}
           </Typography>
         </div>
       </div>

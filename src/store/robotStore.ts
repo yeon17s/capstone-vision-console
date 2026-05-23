@@ -41,6 +41,7 @@ interface RobotState {
   cameraConnected: boolean;
   fastapiConnected: boolean;
   batteryPercent: number;
+  latencyMs: number | null;  // null = no measurement yet or last ping failed
   pose: Pose;
   detection: Detection;
 
@@ -51,6 +52,7 @@ interface RobotState {
 
   setConnectionStatus: (key: ConnectionKey, value: boolean) => void;
   setBatteryPercent: (batteryPercent: number) => void;
+  setLatencyMs: (latencyMs: number | null) => void;
   setPose: (pose: Pose) => void;
   setDetection: (detection: Detection) => void;
   clearDetection: () => void;
@@ -77,6 +79,7 @@ const useRobotStore = create<RobotState>((set) => ({
   cameraConnected: false,
   fastapiConnected: false,
   batteryPercent: 0,
+  latencyMs: null,
   pose: { x: 0, y: 0, yaw: 0 },
   detection: initialDetection,
   recentLog: [],
@@ -84,6 +87,7 @@ const useRobotStore = create<RobotState>((set) => ({
 
   setConnectionStatus: (key, value) => set({ [key]: value }),
   setBatteryPercent: (batteryPercent) => set({ batteryPercent }),
+  setLatencyMs: (latencyMs) => set({ latencyMs }),
   setPose: (pose) => set({ pose }),
   setDetection: (detection) => set({ detection }),
   clearDetection: () => set({ detection: initialDetection }),

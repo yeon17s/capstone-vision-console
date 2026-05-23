@@ -6,6 +6,7 @@ import Settings from "./pages/Settings";
 import useAIStream from "./hooks/useAIStream";
 import useRosConnection from "./hooks/useRosConnection";
 import { useAlarmSound } from "./hooks/useAlarmSound";
+import { useFastapiPing } from "./hooks/useFastapiPing";
 import type { CaptureResult } from "./hooks/useVideoCapture";
 
 type TabName = "Dashboard" | "History" | "Settings";
@@ -26,6 +27,7 @@ export default function App() {
   });
   useRosConnection();
   useAlarmSound();
+  useFastapiPing();
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-mission-bg text-mission-text">

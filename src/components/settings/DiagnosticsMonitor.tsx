@@ -1,9 +1,7 @@
-import { useEffect } from "react";
 import Typography from "../ui/Typography";
 import MissionPanel, { MissionCard } from "../ui/MissionPanel";
 import StatusIndicator from "../ui/StatusIndicator";
 import useRobotStore from "../../store/robotStore";
-import useSettingsStore from "../../store/settingsStore";
 
 type DiagStatus = "active" | "warning" | "error" | "unknown";
 
@@ -27,29 +25,10 @@ function connStatus(connected: boolean): { status: DiagStatus; detail: string } 
 }
 
 export default function DiagnosticsMonitor() {
-  const rosConnected    = useRobotStore((s) => s.rosConnected);
-  const aiConnected     = useRobotStore((s) => s.aiConnected);
-  const cameraConnected = useRobotStore((s) => s.cameraConnected);
+  const rosConnected     = useRobotStore((s) => s.rosConnected);
+  const aiConnected      = useRobotStore((s) => s.aiConnected);
+  const cameraConnected  = useRobotStore((s) => s.cameraConnected);
   const fastapiConnected = useRobotStore((s) => s.fastapiConnected);
-  const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
-  const fastapiUrl = useSettingsStore((s) => s.fastapiUrl);
-
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch(`${fastapiUrl}/ping`, {
-          signal: AbortSignal.timeout(3000),
-        });
-        setConnectionStatus("fastapiConnected", res.ok);
-      } catch {
-        setConnectionStatus("fastapiConnected", false);
-      }
-    };
-
-    check();
-    const id = setInterval(check, 10_000);
-    return () => clearInterval(id);
-  }, [fastapiUrl, setConnectionStatus]);
 
   const items: DiagItem[] = [
     { label: "ROS Bridge", ...connStatus(rosConnected) },
