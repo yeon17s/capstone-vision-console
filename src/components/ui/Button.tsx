@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { cx } from "../../lib/cx";
 
 type ButtonVariant =
   | "nav"
@@ -54,10 +55,6 @@ const SIZE_CLASS: Record<ButtonSize, string> = {
   icon: "h-11 w-11 rounded-lg",
   critical: "w-full rounded-[18px] py-6",
 };
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
-}
 
 export default function Button({
   variant = "panel",

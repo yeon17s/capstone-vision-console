@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Typography from "./Typography";
+import { cx } from "../../lib/cx";
 
 type StatusTone = "success" | "warning" | "danger" | "muted" | "info";
 type StatusSize = "sm" | "md";
@@ -23,22 +24,10 @@ const DOT_CLASS: Record<StatusTone, string> = {
   info: "bg-mission-info",
 };
 
-const TEXT_TONE: Record<StatusTone, "success" | "warning" | "danger" | "muted" | "info"> = {
-  success: "success",
-  warning: "warning",
-  danger: "danger",
-  muted: "muted",
-  info: "info",
-};
-
 const SIZE_CLASS: Record<StatusSize, string> = {
   sm: "h-1.5 w-1.5",
   md: "h-2 w-2",
 };
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
-}
 
 export default function StatusIndicator({
   tone,
@@ -67,7 +56,7 @@ export default function StatusIndicator({
     <Typography
       as="span"
       variant={textVariant}
-      tone={TEXT_TONE[tone]}
+      tone={tone}
       className={cx(showDot && "flex items-center gap-1.5", className)}
     >
       {showDot ? dot : null}

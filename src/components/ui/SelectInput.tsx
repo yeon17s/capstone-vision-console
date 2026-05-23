@@ -1,12 +1,9 @@
 import type { SelectHTMLAttributes } from "react";
 import type { ReactNode } from "react";
+import { cx } from "../../lib/cx";
 
 interface SelectInputProps extends SelectHTMLAttributes<HTMLSelectElement> {
   children: ReactNode;
-}
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
 }
 
 export default function SelectInput({ className, children, ...rest }: SelectInputProps) {

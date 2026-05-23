@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Typography from "./Typography";
+import { cx } from "../../lib/cx";
 
 interface MissionPanelProps {
   title?: ReactNode;
@@ -14,10 +15,6 @@ interface MissionPanelProps {
 interface MissionCardProps {
   children: ReactNode;
   className?: string;
-}
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
 }
 
 export function MissionCard({ children, className }: MissionCardProps) {

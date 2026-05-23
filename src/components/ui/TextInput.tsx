@@ -1,12 +1,9 @@
 import type { InputHTMLAttributes } from "react";
+import { cx } from "../../lib/cx";
 
 interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   mono?: boolean;
   dense?: boolean;
-}
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
 }
 
 export default function TextInput({

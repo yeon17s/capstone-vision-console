@@ -3,12 +3,7 @@ import MissionPanel, { MissionCard } from "../ui/MissionPanel";
 import StatusIndicator from "../ui/StatusIndicator";
 import StatusBadge from "../ui/StatusBadge";
 import useRobotStore, { type DetectionLogEntry } from "../../store/robotStore";
-
-function confTone(conf: number): "success" | "warning" | "muted" {
-  if (conf >= 85) return "success";
-  if (conf >= 70) return "warning";
-  return "muted";
-}
+import { confTone } from "../../lib/confidenceTone";
 
 function AlertCard({ entry }: { entry: DetectionLogEntry }) {
   const tone = confTone(entry.confidence);

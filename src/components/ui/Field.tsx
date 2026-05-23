@@ -1,15 +1,12 @@
 import type { ReactNode } from "react";
 import Typography from "./Typography";
+import { cx } from "../../lib/cx";
 
 interface FieldProps {
   label?: ReactNode;
   hint?: ReactNode;
   className?: string;
   children: ReactNode;
-}
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
 }
 
 export default function Field({ label, hint, className, children }: FieldProps) {

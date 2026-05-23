@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
+import { cx } from "../../lib/cx";
 
 type TypographyVariant =
   | "brand"
@@ -53,10 +54,6 @@ const TONE_CLASS: Record<TypographyTone, string> = {
   danger: "text-mission-critical",
   inverse: "text-mission-bg",
 };
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
-}
 
 export default function Typography<T extends ElementType = "p">({
   as,

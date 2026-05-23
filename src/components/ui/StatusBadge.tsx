@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Typography from "./Typography";
+import { cx } from "../../lib/cx";
 
 type StatusBadgeTone = "success" | "warning" | "danger" | "muted" | "info";
 
@@ -17,10 +18,6 @@ const BADGE_CLASS: Record<StatusBadgeTone, string> = {
   muted: "text-mission-text/40 border-mission-border bg-mission-border/10",
   info: "text-mission-info border-mission-info/40 bg-mission-info/10",
 };
-
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
-}
 
 export default function StatusBadge({
   tone,

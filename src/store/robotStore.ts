@@ -19,7 +19,6 @@ export interface Detection {
   bbox: BBox;
   fps: number;
   frameDelayMs: number;
-  mode?: string;
 }
 
 export type SnapshotStatus = "ok" | "cors_error" | "canvas_error" | "skipped" | "unavailable";

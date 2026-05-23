@@ -3,6 +3,7 @@ import type { RowStatus } from "../../pages/History";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import StatusIndicator from "../ui/StatusIndicator";
+import { confTone } from "../../lib/confidenceTone";
 
 interface DetectionTableProps {
   entries: DetectionLogEntry[];
@@ -17,19 +18,13 @@ function confColor(conf: number): string {
   return "text-mission-text/60";
 }
 
-function confTone(conf: number): "success" | "warning" | "muted" {
-  if (conf >= 85) return "success";
-  if (conf >= 70) return "warning";
-  return "muted";
-}
-
 const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
   Confirmed: "success",
   Pending: "warning",
   FalsePositive: "muted",
 };
 
-const COLS = ["Timestamp", "Conf (%)", "Location", "Mode", "Status"];
+const COLS = ["Timestamp", "Conf (%)", "Location", "Status"];
 
 export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect }: DetectionTableProps) {
   return (
@@ -90,7 +85,6 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                         <Typography as="span" variant="mono" className="text-mission-text/30">—</Typography>
                       )}
                     </td>
-                    <td className="px-4 py-2"><Typography as="span" variant="mono" tone="info" className="uppercase tracking-[0.08em] text-mission-info/90">{row.mode ?? "RGB"}</Typography></td>
                     <td className="px-4 py-2">
                       <StatusIndicator
                         tone={STATUS_TONE[status]}
