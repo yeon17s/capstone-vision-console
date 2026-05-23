@@ -108,7 +108,7 @@ export default function DriveController() {
         : "READY";
 
   return (
-    <MissionPanel title="Robot Drive" bodyClassName="p-5" borderTone="mvp">
+    <MissionPanel title="Robot Drive" bodyClassName="p-5">
       <div className="flex gap-6">
         {/* Left: Joystick Controls */}
         <div className="flex-shrink-0">
@@ -188,8 +188,8 @@ export default function DriveController() {
             onClick={handleEStop}
             className={[
               "w-full py-4",
-              estopFeedback === "success" ? "border-mission-active ring-2 ring-mission-active/60" : "",
-              estopFeedback === "error" || !rosConnected ? "border-mission-suspicious ring-2 ring-mission-suspicious/50" : "",
+              estopFeedback === "success" ? "ring-2 ring-mission-active/60" : "",
+              estopFeedback === "error" || !rosConnected ? "ring-2 ring-mission-suspicious/50" : "",
             ].join(" ")}
           >
             <Typography variant="display" tone="inverse">

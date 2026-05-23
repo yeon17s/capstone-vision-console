@@ -9,7 +9,7 @@ export default function AIConfig() {
     useSettingsStore();
 
   return (
-    <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4" borderTone="mvp">
+    <MissionPanel title="AI & Sensor Configuration" bodyClassName="p-4">
       {/* Confidence Threshold */}
       <RangeField
         className="mb-5"

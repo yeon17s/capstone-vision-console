@@ -27,7 +27,7 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
 
   return (
     <>
-      <div className="pointer-events-none absolute inset-0 z-10 rounded-[20px] border border-[var(--color-accent-yellow)]" />
+      <div className="pointer-events-none absolute inset-0 z-10 rounded-[20px] border border-mission-border" />
 
       <img
         ref={imgRef}
@@ -52,7 +52,7 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
             "cursor-pointer rounded-lg border bg-mission-panel px-3 py-1.5 transition-colors",
             inverted
               ? "border-mission-info bg-mission-info/10"
-              : "border-[var(--color-accent-yellow)]",
+              : "border-mission-border",
           ].join(" ")}
           onClick={onToggleInvert}
           style={onToggleInvert ? undefined : { pointerEvents: "none", opacity: 0.4 }}

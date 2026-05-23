@@ -59,7 +59,7 @@ export default function TopBar({ activeTab, onTabChange }: TopBarProps) {
       </div>
 
       {/* Status Widgets */}
-      <div className="flex min-w-[500px] items-center justify-end gap-3 rounded-[18px] border border-[var(--color-accent-yellow)] p-1">
+      <div className="flex min-w-[500px] items-center justify-end gap-3 rounded-[18px] border border-mission-border p-1">
         <div className="rounded-lg border border-mission-border bg-mission-panel px-3 py-2">
           <Typography as="span" variant="monoStrong">○</Typography>
         </div>

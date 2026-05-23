@@ -59,7 +59,7 @@ export default function DiagnosticsMonitor() {
   ];
 
   return (
-    <MissionPanel title="Diagnostics Monitor" bodyClassName="space-y-1.5 p-4" borderTone="mvp">
+    <MissionPanel title="Diagnostics Monitor" bodyClassName="space-y-1.5 p-4">
       {items.map(({ label, detail, status }) => (
         <MissionCard key={label} className="bg-mission-panel/10 px-3 py-2">
           <div className="flex items-center justify-between">

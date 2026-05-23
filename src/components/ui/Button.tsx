@@ -31,7 +31,7 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
   segment: "",
   icon: "border-mission-border bg-mission-bg text-mission-text hover:border-mission-text hover:bg-mission-panel hover:text-mission-text",
   iconMuted: "border-mission-border bg-mission-panel text-mission-text",
-  critical: "border-2 border-mission-critical bg-mission-critical text-mission-bg shadow-mission-glow-red hover:brightness-110",
+  critical: "border-0 bg-mission-critical text-mission-bg shadow-mission-glow-red hover:brightness-110",
 };
 
 const PRESS_CLASS: Record<ButtonVariant, string> = {
