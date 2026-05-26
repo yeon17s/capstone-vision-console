@@ -3,6 +3,10 @@ import Typography from "../ui/Typography";
 import useSettingsStore from "../../store/settingsStore";
 import useRobotStore from "../../store/robotStore";
 
+
+//const streamUrl = `http://${jetsonIp}:8000/stream?topic=/cv_camera/image_raw'; 부분 const streamUrl = `http://${jetsonIp}:8000/video_feed`로 변경;
+
+
 interface VideoStreamProps {
   imgRef: React.RefObject<HTMLImageElement | null>;
   inverted: boolean;
@@ -11,7 +15,7 @@ interface VideoStreamProps {
 
 export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoStreamProps) {
   const jetsonIp = useSettingsStore((s) => s.jetsonIp);
-  const streamUrl = `http://${jetsonIp}:8080/stream?topic=/cv_camera/image_raw`;
+  const streamUrl = `http://${jetsonIp}:8000/video_feed`;
   const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
 
   useEffect(() => {

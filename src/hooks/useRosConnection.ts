@@ -4,8 +4,12 @@ import useRobotStore from "../store/robotStore";
 import useSettingsStore from "../store/settingsStore";
 import { setRos } from "../lib/rosClient";
 
+//batterySub.subscribe 부분 수정 (배터리 로직 세분화)
+
+
 interface BatteryStateMsg {
   percentage: number;
+  voltage: number;
 }
 
 interface AmclPoseMsg {
@@ -54,8 +58,17 @@ export default function useRosConnection() {
           messageType: "sensor_msgs/BatteryState",
         });
         batterySub.subscribe((msg) => {
-          const { percentage } = msg as BatteryStateMsg;
-          setBatteryPercent(Math.round(percentage * 100));
+          const { voltage } = msg as BatteryStateMsg;
+          let percent = 0;
+
+          if (voltage >= 12.5) percent = 100;
+          else if (voltage >= 12.0) percent = 80;
+          else if (voltage >= 11.4) percent = 50;
+          else if (voltage >= 11.1) percent = 20;
+          else if (voltage >= 10.5) percent = 5;
+          else percent = 0;
+
+          setBatteryPercent(percent);
         });
 
         poseSub = new ROSLIB.Topic({
