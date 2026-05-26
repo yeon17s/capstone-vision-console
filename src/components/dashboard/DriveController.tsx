@@ -5,8 +5,9 @@ import Button from "../ui/Button";
 import useRobotStore from "../../store/robotStore";
 import { publishCmdVel } from "../../lib/rosClient";
 
-const LINEAR_SPEED  = 0.2;
-const ANGULAR_SPEED = 0.5;
+const LINEAR_SPEED  = 0.2;   // m/s
+const ANGULAR_SPEED = 0.5;   // rad/s
+// ROS는 명령이 끊기면 자동 정지하므로 버튼 홀드 중 지속 전송 필요
 const DRIVE_PUBLISH_INTERVAL_MS = 150;
 const ESTOP_FEEDBACK_MS = 1600;
 
@@ -47,6 +48,7 @@ export default function DriveController() {
   const startDriveHold = useCallback(
     (direction: "forward" | "backward" | "left" | "right") => {
       if (!rosConnected) return;
+      // 같은 방향으로 재진입 시 중복 interval 방지
       if (activeDirectionRef.current === direction) return;
 
       stopDriveHold();
@@ -58,6 +60,7 @@ export default function DriveController() {
       }
 
       activeDirectionRef.current = direction;
+      // 버튼 홀드 중 주기적으로 cmd_vel 재전송 (ROS watchdog 대응)
       holdTimerRef.current = setInterval(() => {
         const stillPublished = publishCmdVel(lx, az);
         if (!stillPublished) {
@@ -76,10 +79,12 @@ export default function DriveController() {
   }, [showEStopFeedback, stopDriveHold]);
 
   useEffect(() => {
+    // 탭 전환/화면 꺼짐 시 즉시 정지 (숨겨진 탭에서 로봇이 계속 움직이는 것 방지)
     function handleVisibilityChange() {
       if (document.hidden) stopDriveHold();
     }
 
+    // 버튼 영역 밖에서 포인터를 떼어도 정지되도록 전역 이벤트 등록
     window.addEventListener("pointerup", stopDriveHold);
     window.addEventListener("pointercancel", stopDriveHold);
     window.addEventListener("blur", stopDriveHold);

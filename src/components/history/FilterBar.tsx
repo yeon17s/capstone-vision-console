@@ -20,8 +20,8 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply }: F
 
   return (
     <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
-      {/* Search & Filter */}
       <MissionPanel title="Search & Filter" bodyClassName="p-4">
+        {/* Fetch Status Message */}
         {fetchStatus === "loading" && (
           <Typography as="p" variant="overline" tone="subtle" className="mb-3 text-mission-text/50">
             Loading history from Jetson…
@@ -33,6 +33,7 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply }: F
           </Typography>
         )}
 
+        {/* Search */}
         <TextInput
           placeholder="Search timestamp..."
           value={filters.search}
@@ -40,6 +41,7 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply }: F
           className="mb-3"
         />
 
+        {/* Date Range */}
         <Field label="Date Range" className="mb-3">
           <div className="flex items-center gap-1">
             <TextInput
@@ -60,6 +62,7 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply }: F
           </div>
         </Field>
 
+        {/* Confidence Filter */}
         <RangeField
           className="mb-4"
           label="Confidence Min"
@@ -72,6 +75,7 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply }: F
           onChange={(e) => set("confMin", Number(e.target.value))}
         />
 
+        {/* Apply */}
         <Button onClick={onApply} variant="infoOutline" size="md" className="w-full py-1.5">
           <Typography as="span" variant="controlStrong" tone="info">Apply Filter</Typography>
         </Button>

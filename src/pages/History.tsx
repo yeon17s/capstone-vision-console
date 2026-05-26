@@ -39,7 +39,7 @@ function saveFpOverrides(overrides: Record<string, RowStatus>): void {
   try {
     localStorage.setItem(FP_STORAGE_KEY, JSON.stringify(overrides));
   } catch {
-    // storage full or unavailable — best-effort
+    // localStorage 용량 초과 시 무시
   }
 }
 
@@ -54,8 +54,8 @@ export default function History() {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);
   const [statusOverride, setStatusOverride] = useState<Record<string, RowStatus>>(loadFpOverrides);
 
-  // fetch Jetson CSV on mount and merge (preserves live runtime entries)
   useEffect(() => {
+    // cancelled 플래그: fastapiUrl 변경 시 이전 요청 결과가 늦게 도착해도 무시
     let cancelled = false;
     setFetchStatus("loading");
     fetchHistoryLog(fastapiUrl)
@@ -81,6 +81,7 @@ export default function History() {
         if (!e.timestamp.includes(q)) return false;
       }
       if (appliedFilters.dateFrom && e.timestamp < appliedFilters.dateFrom) return false;
+      // dateTo 당일 전체를 포함하기 위해 " 23:59:59" 접미사를 붙여 비교
       if (appliedFilters.dateTo && e.timestamp > appliedFilters.dateTo + " 23:59:59") return false;
       return true;
     });
@@ -101,6 +102,7 @@ export default function History() {
     if (!selectedEntry) return;
     setStatusOverride((prev) => {
       const next = { ...prev, [selectedEntry.timestamp]: "FalsePositive" as RowStatus };
+      // 페이지 새로고침 후에도 오버라이드 유지
       saveFpOverrides(next);
       return next;
     });
@@ -108,12 +110,15 @@ export default function History() {
 
   return (
     <main className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px] gap-3 overflow-hidden p-3">
+      {/* Filter Sidebar */}
       <FilterBar
         filters={pendingFilters}
         fetchStatus={fetchStatus}
         onChange={setPendingFilters}
         onApply={handleApplyFilter}
       />
+
+      {/* Detection Table */}
       <section className="flex min-h-0 flex-col overflow-hidden">
         <DetectionTable
           entries={filteredEntries}
@@ -122,6 +127,8 @@ export default function History() {
           onSelect={setSelectedIdx}
         />
       </section>
+
+      {/* Detail Modal */}
       <aside className="min-h-0 overflow-hidden">
         <DetailModal
           entry={selectedEntry}

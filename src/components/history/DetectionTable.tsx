@@ -36,11 +36,14 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
       compactBody
     >
         {entries.length === 0 ? (
+          /* Empty State */
           <div className="flex h-full items-center justify-center">
             <Typography variant="control" className="text-mission-text/30">No records match current filters</Typography>
           </div>
         ) : (
+          /* Detection Table */
           <table className="w-full text-mission-control">
+            {/* Table Header */}
             <thead className="sticky top-0 bg-mission-panel">
               <tr className="border-b border-mission-border">
                 {COLS.map((col) => (
@@ -53,6 +56,7 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                 ))}
               </tr>
             </thead>
+            {/* Table Body */}
             <tbody>
               {entries.map((row, i) => {
                 const status = getStatus(row);

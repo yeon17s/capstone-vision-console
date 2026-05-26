@@ -16,10 +16,12 @@ export function useFastapiPing(): void {
     const check = async () => {
       const start = performance.now();
       try {
+        // AbortSignal.any: URL 변경(controller)과 타임아웃 중 먼저 발생한 쪽으로 abort
         const res = await fetch(`${fastapiUrl}/ping`, {
           signal: AbortSignal.any([controller.signal, AbortSignal.timeout(PING_TIMEOUT_MS)]),
         });
         if (res.ok) {
+          // 요청 왕복 시간을 latency로 저장
           setLatencyMs(Math.round(performance.now() - start));
           setConnectionStatus("fastapiConnected", true);
         } else {
@@ -27,7 +29,7 @@ export function useFastapiPing(): void {
           setConnectionStatus("fastapiConnected", false);
         }
       } catch {
-        // ignore aborts caused by URL change or unmount
+        // URL 변경 또는 언마운트로 인한 abort는 무시
         if (controller.signal.aborted) return;
         setLatencyMs(null);
         setConnectionStatus("fastapiConnected", false);

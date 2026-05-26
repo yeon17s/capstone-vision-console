@@ -7,19 +7,6 @@ import StatusBadge from "../ui/StatusBadge";
 import StatusIndicator from "../ui/StatusIndicator";
 
 
-/*
-[주요 변경 사항 요약]
-1. 이미지 표시 방식 변경: 
-- 기존: RGB 및 Thermal View 두 개의 스냅샷을 비교 노출.
-- 수정: 백엔드에서 생성된 단일 snapshot_url을 사용하여 크게 노출.
-2. 복잡한 상태 로직 제거: 
-- SnapshotStatus에 따른 상세 에러 라벨(CORS, Canvas 등) 및 SnapshotCell의 복잡한 조건문 삭제.
-3. UI 레이아웃 최적화: 
-- 이미지 그리드(grid-cols-2)를 제거하고 단일 뷰(h-48)로 변경하여 시인성 확보.
-4. 의존성 정리: 사용하지 않는 SnapshotStatus 타입 및 관련 상수를 정리하여 코드 가독성 향상.
-*/
-
-
 interface DetailModalProps {
   entry: DetectionLogEntry | null;
   status: RowStatus;
@@ -80,7 +67,6 @@ function ConfidenceDonut({ conf }: { conf: number }) {
   );
 }
 
-//캡처 URL만 받아서 이미지를 띄워주도록 단순화
 function SnapshotCell({ url, alt }: { url?: string; alt: string }) {
   if (url) {
     return <img src={url} alt={alt} className="h-full w-full object-cover" />;

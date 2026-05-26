@@ -4,9 +4,6 @@ import useRobotStore from "../store/robotStore";
 import useSettingsStore from "../store/settingsStore";
 import { setRos } from "../lib/rosClient";
 
-//batterySub.subscribe 부분 수정 (배터리 로직 세분화)
-
-
 interface BatteryStateMsg {
   percentage: number;
   voltage: number;
@@ -32,6 +29,7 @@ export default function useRosConnection() {
 
     let ros: ROSLIB.Ros;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    // 언마운트 후 setTimeout 콜백이 실행되어도 재연결하지 않도록 하는 플래그
     let destroyed = false;
 
     // 외부 스코프에서 subscriber를 관리해 reconnect 시 unsubscribe 가능하게 함
@@ -52,6 +50,7 @@ export default function useRosConnection() {
       ros.on("connection", () => {
         setConnectionStatus("rosConnected", true);
 
+        // 배터리 전압을 단계별 퍼센트로 매핑 (12V 리드산 배터리 기준)
         batterySub = new ROSLIB.Topic({
           ros,
           name: "/battery_state",
@@ -78,6 +77,7 @@ export default function useRosConnection() {
         });
         poseSub.subscribe((msg) => {
           const { x, y } = (msg as AmclPoseMsg).pose.pose.position;
+          // quaternion(z, w)에서 yaw 추출: yaw = 2 * atan2(z, w)
           const { z, w } = (msg as AmclPoseMsg).pose.pose.orientation;
           setPose({ x, y, yaw: 2 * Math.atan2(z, w) });
         });
@@ -91,6 +91,7 @@ export default function useRosConnection() {
         unsubscribeAll();
         setConnectionStatus("rosConnected", false);
         setRos(null);
+        // destroyed가 아닐 때만 재연결 (언마운트 후 재연결 방지)
         if (!destroyed) {
           reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
         }

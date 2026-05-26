@@ -3,10 +3,6 @@ import Typography from "../ui/Typography";
 import useSettingsStore from "../../store/settingsStore";
 import useRobotStore from "../../store/robotStore";
 
-
-//const streamUrl = `http://${jetsonIp}:8000/stream?topic=/cv_camera/image_raw'; 부분 const streamUrl = `http://${jetsonIp}:8000/video_feed`로 변경;
-
-
 interface VideoStreamProps {
   imgRef: React.RefObject<HTMLImageElement | null>;
   inverted: boolean;
@@ -31,8 +27,10 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
 
   return (
     <>
+      {/* Border Overlay */}
       <div className="pointer-events-none absolute inset-0 z-10 rounded-[20px] border border-mission-border" />
 
+      {/* Video Image */}
       <img
         ref={imgRef}
         src={streamUrl}
@@ -44,13 +42,16 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
         onError={() => setConnectionStatus("cameraConnected", false)}
       />
 
+      {/* Top Bar: Stream Title + Invert Toggle */}
       <div className="absolute inset-x-4 top-4 z-10 flex items-start justify-between">
+        {/* Stream Title */}
         <div className="rounded-md bg-mission-panel px-3 py-1.5 shadow-mission-soft">
           <Typography as="span" variant="panelTitle" className="tracking-[0.18em]">
             Camera Stream &amp; AI Output
           </Typography>
         </div>
 
+        {/* Invert Toggle */}
         <div
           className={[
             "cursor-pointer rounded-lg border bg-mission-panel px-3 py-1.5 transition-colors",
@@ -67,6 +68,7 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
         </div>
       </div>
 
+      {/* Bottom Gradient */}
       <div className="absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-black/45 to-transparent" />
     </>
   );

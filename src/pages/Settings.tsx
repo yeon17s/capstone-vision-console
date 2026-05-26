@@ -11,10 +11,13 @@ export default function Settings() {
 
   return (
     <main className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-y-auto p-3">
+      {/* Left Column: Connection + AI Config */}
       <div className="flex flex-col gap-3">
         <ConnectionForm />
         <AIConfig />
       </div>
+
+      {/* Right Column: Diagnostics + Storage */}
       <div className="flex flex-col gap-3">
         <DiagnosticsMonitor />
         <StorageSettings />

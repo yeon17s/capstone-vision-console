@@ -8,7 +8,7 @@ interface SettingsData {
   audioAlarmEnabled: boolean;
   volume: number;
   storagePolicy: "original" | "original+inverted";
-  frameWidth: number;   // AI source frame size — fallback when WS payload omits frame_width
+  frameWidth: number;   // AI 소스 프레임 크기 — WS 메시지에 frame_width 없을 때 폴백
   frameHeight: number;
 }
 
@@ -29,7 +29,7 @@ const defaultSettings: SettingsData = {
   jetsonIp: "192.168.0.45",
   rosbridgePort: 9090,
   fastapiUrl: "http://121.156.245.81:8000",
-  confidenceThreshold: 50,  // 0–100 range, matches robotStore.detection.confidence
+  confidenceThreshold: 50,  // 0~100 범위, robotStore.detection.confidence와 스케일 일치
   audioAlarmEnabled: true,
   volume: 70,
   storagePolicy: "original",
@@ -39,7 +39,7 @@ const defaultSettings: SettingsData = {
 
 function migrateSettings(raw: Partial<SettingsData>): Partial<SettingsData> {
   const migrated = { ...raw };
-  // confidenceThreshold was stored as 0–1 before migration to 0–100
+  // confidenceThreshold가 이전에 0~1 범위로 저장된 경우 0~100으로 마이그레이션
   if (
     typeof migrated.confidenceThreshold === "number" &&
     migrated.confidenceThreshold <= 1
@@ -70,10 +70,12 @@ function toSettingsData(settings: SettingsData): SettingsData {
 }
 
 function loadSettings(): SettingsData {
+  // SSR 환경(window 없음)에서는 기본값 사용
   if (typeof window === "undefined") return defaultSettings;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return defaultSettings;
+    // 저장된 값을 마이그레이션 후 기본값과 병합 (새 필드 누락 대비)
     const parsed = migrateSettings(JSON.parse(stored) as Partial<SettingsData>);
     return { ...defaultSettings, ...parsed };
   } catch {
@@ -92,6 +94,7 @@ const useSettingsStore = create<SettingsState>((set, get) => ({
   hydrateSettings: () => set(loadSettings()),
 
   updateSettings: (updates) => {
+    // 부분 업데이트도 마이그레이션을 거쳐 스케일 불일치 방지
     const next: SettingsData = { ...toSettingsData(get()), ...migrateSettings(updates) };
     persistSettings(next);
     set(next);

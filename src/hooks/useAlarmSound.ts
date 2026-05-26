@@ -12,17 +12,17 @@ export function useAlarmSound(): void {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastTimestampRef = useRef<string | null>(null);
 
-  // sync volume immediately when the slider changes, even during playback
+  // 슬라이더 변경 즉시 볼륨 반영 (재생 중에도 적용)
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
     }
   }, [volume]);
 
-  // play once per new detection log entry
   useEffect(() => {
     const latest = recentLog[0];
     if (!latest) return;
+    // 같은 탐지 항목에 중복 재생 방지 (timestamp로 구분)
     if (latest.timestamp === lastTimestampRef.current) return;
     lastTimestampRef.current = latest.timestamp;
 
@@ -33,13 +33,13 @@ export function useAlarmSound(): void {
     }
     const audio = audioRef.current;
     audio.volume = volume / 100;
+    // 이전 재생 중이어도 처음부터 재시작
     audio.currentTime = 0;
     audio.play().catch(() => undefined);
-  // volume is synced by the separate effect above; intentionally excluded here
+  // volume은 위 별도 effect에서 동기화하므로 의존성 배열에서 의도적으로 제외
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recentLog, audioAlarmEnabled]);
 
-  // release Audio object on unmount
   useEffect(() => {
     return () => {
       if (audioRef.current) {

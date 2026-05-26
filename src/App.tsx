@@ -8,15 +8,13 @@ import useRosConnection from "./hooks/useRosConnection";
 import { useAlarmSound } from "./hooks/useAlarmSound";
 import { useFastapiPing } from "./hooks/useFastapiPing";
 
-//import type { CaptureResult } from "./hooks/useVideoCapture"; useVideoCapture 파일 삭제
-// 캡처 관련 로직 전부 삭제하고 AI Stream만 호출
-
 type TabName = "Dashboard" | "History" | "Settings";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabName>("Dashboard");
 
-  useAIStream(); 
+  // 탭 전환 시에도 연결이 유지되도록 앱 루트에서 공통 훅 실행
+  useAIStream();
   useRosConnection();
   useAlarmSound();
   useFastapiPing();

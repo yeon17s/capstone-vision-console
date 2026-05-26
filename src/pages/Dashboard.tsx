@@ -21,6 +21,7 @@ export default function Dashboard() {
     if (latestUrl) {
       setFrozenUrl(latestUrl);
     } else {
+      // snapshot_url이 없을 때 "__none__" 센티널로 "스냅샷 없음" UI를 표시
       setFrozenUrl("__none__");
     }
   };
@@ -41,6 +42,7 @@ export default function Dashboard() {
           <AIOverlay />
           <CriticalAlarmOverlay />
 
+          {/* Freeze Frame Overlay */}
           {frozenUrl && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-[20px] bg-black/80 backdrop-blur-sm">
               {frozenUrl === "__none__" ? (

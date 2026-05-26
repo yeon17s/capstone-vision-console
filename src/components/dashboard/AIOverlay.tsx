@@ -38,6 +38,8 @@ export default function AIOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
+  // ResizeObserver로 컨테이너 크기 변화를 감지해 bbox 좌표를 재계산
+  // (창 크기 변경, 사이드바 토글 등 레이아웃 변동에 대응)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;

@@ -20,8 +20,10 @@ export function setRos(instance: ROSLIB.Ros | null): void {
 
 export function publishCmdVel(lx: number, az: number): boolean {
   const ros = rosInstance;
+  // ROS 미연결 상태면 false 반환 (DriveController에서 E-Stop 피드백에 사용)
   if (!ros) return false;
 
+  // Topic은 연결 후 최초 호출 시 lazy 생성 (setRos(null) 시 캐시 초기화됨)
   if (!cmdVelTopic) {
     cmdVelTopic = new ROSLIB.Topic({
       ros,

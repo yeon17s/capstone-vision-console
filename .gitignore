@@ -13,3 +13,6 @@ pnpm-debug.log*
 .idea/
 .vscode/
 coverage/
+
+.py
+main.*
