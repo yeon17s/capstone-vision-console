@@ -3,24 +3,15 @@ import useRobotStore from "../store/robotStore";
 import useSettingsStore, { isValidFrameDimension } from "../store/settingsStore";
 import { appendHistoryLog } from "../lib/historyApi";
 import type { DetectionLogEntry } from "../store/robotStore";
-import type { CaptureResult } from "./useVideoCapture";
 
-const LOG_THROTTLE_MS = 3000;
+
+
 const FLUSH_INTERVAL_MS = 10_000;
 const PENDING_QUEUE_KEY = "sentinel-pending-queue";
-
-interface UseAIStreamOptions {
-  capture?: (inverted: boolean) => CaptureResult;
-}
 
 interface PendingHistoryItem {
   baseUrl: string;
   entry: DetectionLogEntry;
-}
-
-function stripSnapshots(entry: DetectionLogEntry): DetectionLogEntry {
-  const { snapshotOriginal: _, snapshotInverted: __, ...rest } = entry;
-  return rest;
 }
 
 function loadPendingQueue(defaultBaseUrl: string): PendingHistoryItem[] {
@@ -32,8 +23,7 @@ function loadPendingQueue(defaultBaseUrl: string): PendingHistoryItem[] {
       if ("entry" in item && "baseUrl" in item) {
         return item;
       }
-      // Backward compatibility for the previous queue shape.
-      return { baseUrl: defaultBaseUrl, entry: item };
+      return { baseUrl: defaultBaseUrl, entry: item as DetectionLogEntry };
     });
   } catch {
     return [];
@@ -42,25 +32,16 @@ function loadPendingQueue(defaultBaseUrl: string): PendingHistoryItem[] {
 
 function savePendingQueue(queue: PendingHistoryItem[]): void {
   try {
-    const stripped = queue.map((item) => ({
-      baseUrl: item.baseUrl,
-      // Strip data URLs before persisting. Snapshots are large and not needed for CSV retry.
-      entry: stripSnapshots(item.entry),
-    }));
-    localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(stripped));
+    localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(queue));
   } catch {
     // storage full — best-effort
   }
 }
 
-function useAIStream({ capture }: UseAIStreamOptions = {}): void {
+function useAIStream(): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const invertedSnapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastLoggedAtRef = useRef<number>(0);
-  const captureRef = useRef(capture);
-  captureRef.current = capture;
 
   const setDetection = useRobotStore((s) => s.setDetection);
   const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
@@ -69,18 +50,12 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
   const jetsonIp = useSettingsStore((s) => s.jetsonIp);
   const fastapiUrl = useSettingsStore((s) => s.fastapiUrl);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
-  const storagePolicy = useSettingsStore((s) => s.storagePolicy);
-  const storagePolicyRef = useRef(storagePolicy);
-  storagePolicyRef.current = storagePolicy;
   const fastapiUrlRef = useRef(fastapiUrl);
   fastapiUrlRef.current = fastapiUrl;
 
-  // Pending queue: entries awaiting successful CSV append, persisted to localStorage.
-  // Each item carries its target baseUrl so settings changes cannot send old logs to a new backend.
   const pendingQueueRef = useRef<PendingHistoryItem[]>(loadPendingQueue(fastapiUrl));
   const isFlushingRef = useRef(false);
 
-  // keep poseRef up-to-date without triggering re-render
   useEffect(() => {
     return useRobotStore.subscribe((state) => {
       poseRef.current = state.pose;
@@ -95,8 +70,6 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
     savePendingQueue(pendingQueueRef.current);
   }
 
-  // Flush pending queue sequentially for the active backend.
-  // Stop on first failure to preserve CSV append order for that backend.
   async function flushPendingQueue() {
     if (isFlushingRef.current || pendingQueueRef.current.length === 0) return;
     isFlushingRef.current = true;
@@ -125,14 +98,12 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
     }
   }
 
-  // periodic retry + beforeunload best-effort flush
   useEffect(() => {
     flushIntervalRef.current = setInterval(() => {
       void flushPendingQueue();
     }, FLUSH_INTERVAL_MS);
 
     function handleUnload() {
-      // synchronous best-effort: persist queue so it survives reload
       savePendingQueue(pendingQueueRef.current);
     }
     window.addEventListener("beforeunload", handleUnload);
@@ -141,7 +112,6 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
       if (flushIntervalRef.current) clearInterval(flushIntervalRef.current);
       window.removeEventListener("beforeunload", handleUnload);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -156,7 +126,6 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
       ws.onopen = () => {
         if (!isMounted) return;
         setConnectionStatus("aiConnected", true);
-        // attempt to drain pending queue on reconnect
         void flushPendingQueue();
       };
 
@@ -172,6 +141,7 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
             frame_delay_ms: number;
             frame_width?: number;
             frame_height?: number;
+            snapshot_url?: string; //백엔드에서 보내주는 사진 주소
           };
 
           if (
@@ -188,7 +158,7 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
 
           const detection = {
             class: cls,
-            confidence: data.confidence,  // 0–100 range from server
+            confidence: data.confidence,
             bbox: data.bbox,
             fps: data.fps,
             frameDelayMs: data.frame_delay_ms,
@@ -197,45 +167,19 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
           setDetection(detection);
 
           if (cls === "person") {
-            const now = Date.now();
-            if (now - lastLoggedAtRef.current < LOG_THROTTLE_MS) return;
-            lastLoggedAtRef.current = now;
+            if (!data.snapshot_url) return;
 
-            const originalResult = captureRef.current?.(false);
-            const snapshotOriginal = originalResult?.dataUrl;
-            const snapshotOriginalStatus = originalResult?.status ?? "unavailable";
             const poseAtDetection = { ...poseRef.current };
 
-            if (invertedSnapshotTimerRef.current) {
-              clearTimeout(invertedSnapshotTimerRef.current);
-            }
-
-            invertedSnapshotTimerRef.current = setTimeout(() => {
-              if (!isMounted) return;
-              let snapshotInverted: string | undefined;
-              let snapshotInvertedStatus: DetectionLogEntry["snapshotInvertedStatus"];
-              if (storagePolicyRef.current === "original+inverted") {
-                const invertedResult = captureRef.current?.(true);
-                snapshotInverted = invertedResult?.dataUrl;
-                snapshotInvertedStatus = invertedResult?.status ?? "unavailable";
-              } else {
-                snapshotInvertedStatus = "skipped";
-              }
-              const logEntry: DetectionLogEntry = {
-                ...detection,
-                timestamp: data.timestamp,
-                snapshotOriginal,
-                snapshotOriginalStatus,
-                snapshotInverted,
-                snapshotInvertedStatus,
-                pose: poseAtDetection,
-              };
-              pushDetectionLog(logEntry);
-
-              // All CSV writes go through the queue so append order is controlled in one place.
-              enqueue(logEntry);
-              void flushPendingQueue();
-            }, 1500);
+            const logEntry: DetectionLogEntry = {
+              ...detection,
+              timestamp: data.timestamp,
+              snapshot_url: data.snapshot_url, //URL 바로 맵핑
+              pose: poseAtDetection,
+            };
+            pushDetectionLog(logEntry);
+            enqueue(logEntry);
+            void flushPendingQueue();
           }
         } catch {
           // malformed message — ignore
@@ -260,7 +204,6 @@ function useAIStream({ capture }: UseAIStreamOptions = {}): void {
     return () => {
       isMounted = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      if (invertedSnapshotTimerRef.current) clearTimeout(invertedSnapshotTimerRef.current);
       wsRef.current?.close();
     };
   }, [jetsonIp, setDetection, setConnectionStatus, pushDetectionLog, fastapiUrl, updateSettings]);

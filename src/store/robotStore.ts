@@ -1,5 +1,9 @@
 import { create } from "zustand";
 
+
+//DetectionLogEntry snapshotOriginal 등 삭제 후 snapshot_url로 대체
+
+
 export interface BBox {
   x: number;
   y: number;
@@ -25,11 +29,8 @@ export type SnapshotStatus = "ok" | "cors_error" | "canvas_error" | "skipped" | 
 
 export interface DetectionLogEntry extends Detection {
   timestamp: string;
-  snapshotOriginal?: string;        // data URL, captured at detection moment
-  snapshotOriginalStatus?: SnapshotStatus;
-  snapshotInverted?: string;        // data URL, captured 1–2s after detection
-  snapshotInvertedStatus?: SnapshotStatus;
-  pose?: Pose;                      // robot pose at detection moment
+  snapshot_url?: string;
+  pose?: Pose;
 }
 
 type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected" | "fastapiConnected";

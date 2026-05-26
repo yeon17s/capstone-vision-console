@@ -1,19 +1,20 @@
-import type { DetectionLogEntry, SnapshotStatus } from "../store/robotStore";
+import type { DetectionLogEntry } from "../store/robotStore";
 
-// Flat CSV row shape the backend expects/returns.
+
+
 export interface HistoryRow {
   timestamp: string;
-  confidence: number | string;
-  bbox_x: number | string;
-  bbox_y: number | string;
-  bbox_w: number | string;
-  bbox_h: number | string;
-  fps: number | string;
-  frame_delay_ms: number | string;
-  pose_x?: number | string | null;
-  pose_y?: number | string | null;
-  pose_yaw?: number | string | null;
-  snapshot_status: "captured" | "unavailable";
+  confidence: number;
+  bbox_x: number;
+  bbox_y: number;
+  bbox_w: number;
+  bbox_h: number;
+  fps: number;
+  frame_delay_ms: number;
+  pose_x?: number | null;
+  pose_y?: number | null;
+  pose_yaw?: number | null;
+  snapshot_url?: string; //status 대신 URL 하나로 통합
 }
 
 function safeNum(v: number | string | null | undefined, fallback: number): number {
@@ -22,28 +23,7 @@ function safeNum(v: number | string | null | undefined, fallback: number): numbe
   return Number.isFinite(n) ? n : fallback;
 }
 
-function toRow(entry: DetectionLogEntry): HistoryRow {
-  return {
-    timestamp: entry.timestamp,
-    confidence: entry.confidence,
-    bbox_x: entry.bbox.x,
-    bbox_y: entry.bbox.y,
-    bbox_w: entry.bbox.w,
-    bbox_h: entry.bbox.h,
-    fps: entry.fps,
-    frame_delay_ms: entry.frameDelayMs,
-    pose_x: entry.pose?.x ?? null,
-    pose_y: entry.pose?.y ?? null,
-    pose_yaw: entry.pose?.yaw ?? null,
-    snapshot_status: entry.snapshotOriginal ? "captured" : "unavailable",
-  };
-}
-
-const CSV_STATUS_MAP: Record<HistoryRow["snapshot_status"], SnapshotStatus> = {
-  captured:    "ok",
-  unavailable: "unavailable",
-};
-
+//젯슨에서 온 데이터를 프론트엔드 상태에 맞게 변환
 function fromRow(row: HistoryRow): DetectionLogEntry {
   const poseX = safeNum(row.pose_x, NaN);
   const poseY = safeNum(row.pose_y, NaN);
@@ -63,18 +43,34 @@ function fromRow(row: HistoryRow): DetectionLogEntry {
     fps: safeNum(row.fps, 0),
     frameDelayMs: safeNum(row.frame_delay_ms, 0),
     pose: hasPose ? { x: poseX, y: poseY, yaw: poseYaw } : undefined,
-    snapshotOriginalStatus: CSV_STATUS_MAP[row.snapshot_status],
+    snapshot_url: row.snapshot_url,
   };
 }
 
+//DB에 기록할 때 (새 구조에 맞춤)
 export async function appendHistoryLog(
   baseUrl: string,
   entry: DetectionLogEntry
 ): Promise<void> {
+  const payload = {
+    timestamp: entry.timestamp,
+    confidence: entry.confidence,
+    bbox_x: entry.bbox.x,
+    bbox_y: entry.bbox.y,
+    bbox_w: entry.bbox.w,
+    bbox_h: entry.bbox.h,
+    fps: entry.fps,
+    frame_delay_ms: entry.frameDelayMs,
+    pose_x: entry.pose?.x ?? null,
+    pose_y: entry.pose?.y ?? null,
+    pose_yaw: entry.pose?.yaw ?? null,
+    snapshot_url: entry.snapshot_url
+  };
+
   const res = await fetch(`${baseUrl}/api/history/log`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(toRow(entry)),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     throw new Error(`history append failed: ${res.status}`);
@@ -89,5 +85,5 @@ export async function fetchHistoryLog(baseUrl: string): Promise<DetectionLogEntr
   const rows = (await res.json()) as HistoryRow[];
   return rows
     .map(fromRow)
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp)); // newest-first, regardless of backend order
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 }
