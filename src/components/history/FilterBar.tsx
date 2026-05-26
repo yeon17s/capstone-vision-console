@@ -8,13 +8,12 @@ import RangeField from "../ui/RangeField";
 
 interface FilterBarProps {
   filters: Filters;
-  trendHeights: number[];
   fetchStatus: "idle" | "loading" | "error";
   onChange: (f: Filters) => void;
   onApply: () => void;
 }
 
-export default function FilterBar({ filters, trendHeights, fetchStatus, onChange, onApply }: FilterBarProps) {
+export default function FilterBar({ filters, fetchStatus, onChange, onApply }: FilterBarProps) {
   function set<K extends keyof Filters>(key: K, value: Filters[K]) {
     onChange({ ...filters, [key]: value });
   }
@@ -78,22 +77,6 @@ export default function FilterBar({ filters, trendHeights, fetchStatus, onChange
         </Button>
       </MissionPanel>
 
-      {/* Historical Detection Trend */}
-      <MissionPanel title="Historical Detection Trend" className="flex-1" bodyClassName="flex h-full flex-col p-4">
-        <div className="flex h-32 items-end gap-px rounded border border-mission-border bg-mission-bg px-2 pb-1">
-          {trendHeights.map((h, i) => (
-            <div
-              key={i}
-              className="flex-1 rounded-t bg-mission-info/40"
-              style={{ height: `${h}%` }}
-            />
-          ))}
-        </div>
-        <div className="mt-1 flex justify-between">
-          <Typography as="span" variant="overline" className="text-mission-text/30">older</Typography>
-          <Typography as="span" variant="overline" className="text-mission-text/30">recent</Typography>
-        </div>
-      </MissionPanel>
     </aside>
   );
 }

@@ -24,12 +24,12 @@ const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
   FalsePositive: "muted",
 };
 
-const COLS = ["Timestamp", "Conf (%)", "Location", "Status"];
+const COLS = ["Timestamp", "Conf (%)", "Status"];
 
 export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect }: DetectionTableProps) {
   return (
     <MissionPanel
-      className="flex-1"
+      className="h-full"
       title="Detection Log"
       headerRight={<Typography as="span" variant="monoStrong" className="text-mission-text/40">{entries.length} records</Typography>}
       bodyClassName="min-h-0 flex-1 overflow-y-auto p-0"
@@ -75,15 +75,6 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                         textVariant="monoStrong"
                         className={confColor(row.confidence)}
                       />
-                    </td>
-                    <td className="px-4 py-2">
-                      {row.pose ? (
-                        <Typography as="span" variant="mono" className="text-mission-text/70">
-                          {row.pose.x.toFixed(2)}, {row.pose.y.toFixed(2)}
-                        </Typography>
-                      ) : (
-                        <Typography as="span" variant="mono" className="text-mission-text/30">—</Typography>
-                      )}
                     </td>
                     <td className="px-4 py-2">
                       <StatusIndicator

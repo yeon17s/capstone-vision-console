@@ -1,10 +1,24 @@
-import type { DetectionLogEntry, SnapshotStatus } from "../../store/robotStore";
+import type { DetectionLogEntry } from "../../store/robotStore";
 import type { RowStatus } from "../../pages/History";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import StatusBadge from "../ui/StatusBadge";
 import StatusIndicator from "../ui/StatusIndicator";
+
+
+/*
+[주요 변경 사항 요약]
+1. 이미지 표시 방식 변경: 
+- 기존: RGB 및 Thermal View 두 개의 스냅샷을 비교 노출.
+- 수정: 백엔드에서 생성된 단일 snapshot_url을 사용하여 크게 노출.
+2. 복잡한 상태 로직 제거: 
+- SnapshotStatus에 따른 상세 에러 라벨(CORS, Canvas 등) 및 SnapshotCell의 복잡한 조건문 삭제.
+3. UI 레이아웃 최적화: 
+- 이미지 그리드(grid-cols-2)를 제거하고 단일 뷰(h-48)로 변경하여 시인성 확보.
+4. 의존성 정리: 사용하지 않는 SnapshotStatus 타입 및 관련 상수를 정리하여 코드 가독성 향상.
+*/
+
 
 interface DetailModalProps {
   entry: DetectionLogEntry | null;
@@ -38,7 +52,6 @@ function MetaRow({ label, value, mono = false, accent = false }: MetaRowProps) {
 }
 
 function ConfidenceDonut({ conf }: { conf: number }) {
-  // conf is 0–100 percent scale
   const pct = conf;
   const dash = pct.toFixed(1);
   const gap = (100 - pct).toFixed(1);
@@ -67,23 +80,14 @@ function ConfidenceDonut({ conf }: { conf: number }) {
   );
 }
 
-const SNAPSHOT_UNAVAILABLE_LABEL: Record<Exclude<SnapshotStatus, "ok">, string> = {
-  cors_error:    "Capture unavailable (CORS)",
-  canvas_error:  "Capture unavailable (canvas error)",
-  skipped:       "Not saved (policy: Original Only)",
-  unavailable:   "Capture unavailable",
-};
-
-function SnapshotCell({ dataUrl, status, alt }: { dataUrl?: string; status?: SnapshotStatus; alt: string }) {
-  if (dataUrl) {
-    return <img src={dataUrl} alt={alt} className="h-full w-full object-cover" />;
+//캡처 URL만 받아서 이미지를 띄워주도록 단순화
+function SnapshotCell({ url, alt }: { url?: string; alt: string }) {
+  if (url) {
+    return <img src={url} alt={alt} className="h-full w-full object-cover" />;
   }
-  const msg = status && status !== "ok"
-    ? SNAPSHOT_UNAVAILABLE_LABEL[status]
-    : "No Image";
   return (
     <Typography as="p" variant="overline" className="text-center text-mission-text/30 px-2">
-      {msg}
+      No Image Available
     </Typography>
   );
 }
@@ -133,13 +137,6 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         <div className="flex flex-col gap-2 rounded-[16px] border border-mission-border bg-mission-bg px-4 py-3">
           <MetaRow label="Timestamp"   value={entry.timestamp} mono />
           <MetaRow label="Detection"   value="Detected" accent />
-          {entry.pose && (
-            <MetaRow
-              label="Location"
-              value={`X: ${entry.pose.x.toFixed(3)} / Y: ${entry.pose.y.toFixed(3)} / Yaw: ${entry.pose.yaw.toFixed(3)}`}
-              mono
-            />
-          )}
           <div className="flex items-baseline gap-2">
             <Typography as="span" variant="overline" tone="subtle" className="min-w-[110px]">
               FPS
@@ -159,32 +156,17 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
           </div>
         </div>
 
-        {/* Image comparison */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              <SnapshotCell
-                dataUrl={entry.snapshotOriginal}
-                status={entry.snapshotOriginalStatus}
-                alt="RGB snapshot at detection moment"
-              />
-            </div>
-            <Typography as="span" variant="overline" className="text-mission-text/30">
-              RGB (Detection Moment)
-            </Typography>
+        {/* Image Display */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex h-48 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+            <SnapshotCell
+              url={entry.snapshot_url}
+              alt="Snapshot at detection moment"
+            />
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              <SnapshotCell
-                dataUrl={entry.snapshotInverted}
-                status={entry.snapshotInvertedStatus}
-                alt="Thermal-view snapshot (1.5s after detection)"
-              />
-            </div>
-            <Typography as="span" variant="overline" className="text-mission-text/30">
-              Thermal View (Post-Detection)
-            </Typography>
-          </div>
+          <Typography as="span" variant="overline" className="text-mission-text/30">
+            Detection Snapshot
+          </Typography>
         </div>
     </MissionPanel>
   );

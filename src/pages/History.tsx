@@ -86,16 +86,6 @@ export default function History() {
     });
   }, [entries, appliedFilters]);
 
-  const trendHeights = useMemo(() => {
-    if (entries.length === 0) return Array(12).fill(5) as number[];
-    const sorted = [...entries].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-    const bucketSize = Math.max(1, Math.ceil(sorted.length / 12));
-    return Array.from({ length: 12 }, (_, i) => {
-      const count = sorted.slice(i * bucketSize, (i + 1) * bucketSize).length;
-      return Math.max(5, Math.min(100, (count / bucketSize) * 100));
-    });
-  }, [entries]);
-
   const selectedEntry = selectedIdx !== null ? (filteredEntries[selectedIdx] ?? null) : null;
 
   function getStatus(entry: DetectionLogEntry): RowStatus {
@@ -120,12 +110,11 @@ export default function History() {
     <main className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px] gap-3 overflow-hidden p-3">
       <FilterBar
         filters={pendingFilters}
-        trendHeights={trendHeights}
         fetchStatus={fetchStatus}
         onChange={setPendingFilters}
         onApply={handleApplyFilter}
       />
-      <section className="min-h-0 overflow-hidden">
+      <section className="flex min-h-0 flex-col overflow-hidden">
         <DetectionTable
           entries={filteredEntries}
           selectedIdx={selectedIdx}
