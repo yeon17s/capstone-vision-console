@@ -27,6 +27,7 @@ export interface DetectionLogEntry extends Detection {
   timestamp: string;
   snapshot_url?: string;
   pose?: Pose;
+  storagePolicy?: "original" | "original+inverted";
 }
 
 type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected" | "fastapiConnected";
@@ -41,7 +42,7 @@ interface RobotState {
   pose: Pose;
   detection: Detection;
 
-  // 세션 중 최근 탐지 목록 (메모리 절약을 위해 최대 50개로 제한)
+  // 세션 중 최근 탐지 목록 (메모리 절약을 위해 최대 200개로 제한)
   recentLog: DetectionLogEntry[];
   // 젯슨 DB + 세션 탐지를 합산한 전체 히스토리 (History 페이지 소스)
   historyLog: DetectionLogEntry[];
@@ -58,7 +59,7 @@ interface RobotState {
   clearDetectionLog: () => void;
 }
 
-const RECENT_LOG_CAP = 50;
+const RECENT_LOG_CAP = 200;
 
 const initialDetection: Detection = {
   class: "none",
