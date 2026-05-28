@@ -76,6 +76,18 @@ export async function appendHistoryLog(
   }
 }
 
+export async function syncConfidenceThreshold(baseUrl: string, threshold: number): Promise<void> {
+  try {
+    await fetch(`${baseUrl}/api/settings/threshold`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ threshold }),
+    });
+  } catch {
+    // 백엔드 미연결 시 무시 — UI 상태는 이미 반영됨
+  }
+}
+
 export async function fetchHistoryLog(baseUrl: string): Promise<DetectionLogEntry[]> {
   const res = await fetch(`${baseUrl}/api/history`);
   if (!res.ok) {
