@@ -4,6 +4,7 @@ import StatusIndicator from "../ui/StatusIndicator";
 import StatusBadge from "../ui/StatusBadge";
 import useRobotStore, { type DetectionLogEntry } from "../../store/robotStore";
 import { confTone } from "../../lib/confidenceTone";
+import { detectionLabel } from "../../lib/detectionLabel";
 
 
 function AlertCard({ entry }: { entry: DetectionLogEntry }) {
@@ -37,7 +38,7 @@ function AlertCard({ entry }: { entry: DetectionLogEntry }) {
 
           {/* Detection Label */}
           <div className="flex items-center gap-2">
-            <Typography as="span" variant="emphasis" className="text-mission-critical">Detected</Typography>
+            <Typography as="span" variant="emphasis" className="text-mission-critical">{detectionLabel(entry.class).full}</Typography>
             <StatusIndicator tone={tone} />
           </div>
 
@@ -57,12 +58,13 @@ function AlertCard({ entry }: { entry: DetectionLogEntry }) {
 
 export default function AlertFeed() {
   const detectionLog = useRobotStore((s) => s.recentLog) || [];
+  const rosConnected = useRobotStore((s) => s.rosConnected);
 
   return (
     <MissionPanel
       className="flex-1"
       title="Real-Time Alert Feed"
-      headerRight={<StatusIndicator tone="success" size="md" pulse />}
+      headerRight={<StatusIndicator tone={rosConnected ? "success" : "danger"} size="md" pulse={rosConnected} />}
       bodyClassName="flex-1 space-y-2 overflow-y-auto p-3"
       footer={
         <div className="flex gap-5">
@@ -73,6 +75,10 @@ export default function AlertFeed() {
           <div className="flex items-center gap-2">
             <StatusIndicator tone="warning" />
             <StatusBadge tone="warning" className="border-0 bg-transparent px-0 py-0">Medium</StatusBadge>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusIndicator tone="muted" />
+            <StatusBadge tone="muted" className="border-0 bg-transparent px-0 py-0">Low</StatusBadge>
           </div>
         </div>
       }

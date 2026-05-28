@@ -20,7 +20,7 @@ const DOT_CLASS: Record<StatusTone, string> = {
   success: "bg-mission-active",
   warning: "bg-mission-suspicious",
   danger: "bg-mission-critical",
-  muted: "bg-mission-text/30",
+  muted: "bg-slate-400",
   info: "bg-mission-info",
 };
 
