@@ -1,5 +1,6 @@
 import type { DetectionLogEntry } from "../../store/robotStore";
 import type { RowStatus } from "../../pages/History";
+import { detectionLabel } from "../../lib/detectionLabel";
 import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
@@ -11,6 +12,7 @@ interface DetailModalProps {
   entry: DetectionLogEntry | null;
   status: RowStatus;
   onMarkFalsePositive: () => void;
+  onClose: () => void;
 }
 
 interface MetaRowProps {
@@ -47,8 +49,8 @@ function ConfidenceDonut({ conf }: { conf: number }) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-1">
-      <div className="relative flex h-20 w-20 items-center justify-center">
-        <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
+      <div className="relative flex h-32 w-32 items-center justify-center">
+        <svg viewBox="0 0 36 36" className="h-32 w-32 -rotate-90">
           <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" strokeWidth="3.8" />
           <circle
             cx="18" cy="18" r="15.9" fill="none"
@@ -84,7 +86,7 @@ const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warnin
   FalsePositive: { label: "False Positive", tone: "muted" },
 };
 
-export default function DetailModal({ entry, status, onMarkFalsePositive }: DetailModalProps) {
+export default function DetailModal({ entry, status, onMarkFalsePositive, onClose }: DetailModalProps) {
   if (!entry) {
     return (
       <MissionPanel className="h-full" bodyClassName="flex h-full items-center justify-center py-6">
@@ -105,11 +107,20 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
           <StatusBadge tone={statusTone}>
             {statusLabel}
           </StatusBadge>
-          {!isFalsePositive && (
-            <Button variant="dangerOutline" size="sm" className="px-2 py-0.5" onClick={onMarkFalsePositive}>
-              <Typography as="span" variant="overline" tone="danger" className="font-bold">False Positive</Typography>
-            </Button>
-          )}
+          <Button variant="dangerOutline" size="sm" className="px-2 py-0.5" onClick={onMarkFalsePositive}>
+            <Typography as="span" variant="overline" tone="danger" className="font-bold">
+              {isFalsePositive ? "Undo False Positive" : "False Positive"}
+            </Typography>
+          </Button>
+          <button
+            onClick={onClose}
+            className="ml-1 flex h-5 w-5 items-center justify-center rounded text-mission-text/40 hover:text-mission-text/80 transition-colors"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5">
+              <line x1="3" y1="3" x2="13" y2="13" />
+              <line x1="13" y1="3" x2="3" y2="13" />
+            </svg>
+          </button>
         </div>
       }
       bodyClassName="grid h-full grid-cols-1 grid-rows-[auto_auto_1fr] items-start gap-5 p-4"
@@ -122,7 +133,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
         {/* Metadata */}
         <div className="flex flex-col gap-2 rounded-[16px] border border-mission-border bg-mission-bg px-4 py-3">
           <MetaRow label="Timestamp"   value={entry.timestamp} mono />
-          <MetaRow label="Detection"   value="Detected" accent />
+          <MetaRow label="Detection" value={detectionLabel(entry.class).full} accent />
           <div className="flex items-baseline gap-2">
             <Typography as="span" variant="overline" tone="subtle" className="min-w-[110px]">
               FPS
@@ -144,7 +155,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive }: Deta
 
         {/* Image Display */}
         <div className="flex flex-col items-center gap-1">
-          <div className="flex h-48 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+          <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
             <SnapshotCell
               url={entry.snapshot_url}
               alt="Snapshot at detection moment"

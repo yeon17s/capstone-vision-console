@@ -8,6 +8,17 @@ import { fetchHistoryLog } from "../lib/historyApi";
 
 export type RowStatus = "Confirmed" | "Pending" | "FalsePositive";
 
+const MOCK_ENTRY: import("../store/robotStore").DetectionLogEntry = {
+  timestamp: "2025-05-26 09:31:07",
+  class: "cod",
+  confidence: 87.4,
+  bbox: { x: 142, y: 98, w: 210, h: 315 },
+  fps: 29.6,
+  frameDelayMs: 34,
+  pose: { x: 1.25, y: -0.43, yaw: 0.17 },
+  snapshot_url: undefined,
+};
+
 export interface Filters {
   search: string;
   dateFrom: string;
@@ -71,7 +82,7 @@ export default function History() {
     return () => { cancelled = true; };
   }, [fastapiUrl, mergeHistoryLog]);
 
-  const entries: DetectionLogEntry[] = historyLog;
+  const entries: DetectionLogEntry[] = historyLog.length > 0 ? historyLog : [MOCK_ENTRY];
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
@@ -101,15 +112,28 @@ export default function History() {
   const handleMarkFalsePositive = useCallback(() => {
     if (!selectedEntry) return;
     setStatusOverride((prev) => {
-      const next = { ...prev, [selectedEntry.timestamp]: "FalsePositive" as RowStatus };
-      // 페이지 새로고침 후에도 오버라이드 유지
+      let next: Record<string, RowStatus>;
+      if (prev[selectedEntry.timestamp] === "FalsePositive") {
+        const { [selectedEntry.timestamp]: _, ...rest } = prev;
+        next = rest;
+      } else {
+        next = { ...prev, [selectedEntry.timestamp]: "FalsePositive" };
+      }
       saveFpOverrides(next);
       return next;
     });
   }, [selectedEntry]);
 
+  const showDetail = selectedIdx !== null;
+
   return (
-    <main className="grid min-h-0 flex-1 grid-cols-[380px_minmax(0,1fr)_380px] gap-3 overflow-hidden p-3">
+    <main
+      className={`grid min-h-0 flex-1 gap-3 overflow-hidden p-3 ${
+        showDetail
+          ? "grid-cols-[380px_minmax(0,1fr)_450px]"
+          : "grid-cols-[380px_minmax(0,1fr)]"
+      }`}
+    >
       {/* Filter Sidebar */}
       <FilterBar
         filters={pendingFilters}
@@ -129,13 +153,16 @@ export default function History() {
       </section>
 
       {/* Detail Modal */}
-      <aside className="min-h-0 overflow-hidden">
-        <DetailModal
-          entry={selectedEntry}
-          status={selectedEntry ? getStatus(selectedEntry) : "Confirmed"}
-          onMarkFalsePositive={handleMarkFalsePositive}
-        />
-      </aside>
+      {showDetail && (
+        <aside className="min-h-0 overflow-hidden">
+          <DetailModal
+            entry={selectedEntry}
+            status={selectedEntry ? getStatus(selectedEntry) : "Confirmed"}
+            onMarkFalsePositive={handleMarkFalsePositive}
+            onClose={() => setSelectedIdx(null)}
+          />
+        </aside>
+      )}
     </main>
   );
 }
