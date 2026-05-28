@@ -4,6 +4,7 @@ import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import useRobotStore from "../../store/robotStore";
 import { publishCmdVel } from "../../lib/rosClient";
+import { cancelAutoScan } from "../../lib/autoScanController";
 
 const LINEAR_SPEED  = 0.2;   // m/s
 const ANGULAR_SPEED = 0.5;   // rad/s
@@ -73,6 +74,7 @@ export default function DriveController() {
   );
 
   const handleEStop = useCallback(() => {
+    cancelAutoScan();
     stopDriveHold();
     const published = publishCmdVel(0, 0);
     showEStopFeedback(published ? "success" : "error");

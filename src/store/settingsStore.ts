@@ -10,6 +10,7 @@ interface SettingsData {
   storagePolicy: "original" | "original+inverted";
   frameWidth: number;   // AI 소스 프레임 크기 — WS 메시지에 frame_width 없을 때 폴백
   frameHeight: number;
+  autoScanEnabled: boolean;  // 탐지 시 로봇 자동 좌우 스캔 여부
 }
 
 interface SettingsState extends SettingsData {
@@ -35,6 +36,7 @@ const defaultSettings: SettingsData = {
   storagePolicy: "original",
   frameWidth: DEFAULT_FRAME_WIDTH,
   frameHeight: DEFAULT_FRAME_HEIGHT,
+  autoScanEnabled: false,
 };
 
 function migrateSettings(raw: Partial<SettingsData>): Partial<SettingsData> {
@@ -66,6 +68,7 @@ function toSettingsData(settings: SettingsData): SettingsData {
     storagePolicy: settings.storagePolicy,
     frameWidth: settings.frameWidth,
     frameHeight: settings.frameHeight,
+    autoScanEnabled: settings.autoScanEnabled,
   };
 }
 

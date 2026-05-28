@@ -2,9 +2,9 @@ import { useEffect, useRef } from "react";
 import useRobotStore from "../store/robotStore";
 import useSettingsStore, { isValidFrameDimension } from "../store/settingsStore";
 import { appendHistoryLog } from "../lib/historyApi";
+import { publishCmdVel } from "../lib/rosClient";
+import { registerCancelAutoScan } from "../lib/autoScanController";
 import type { DetectionLogEntry } from "../store/robotStore";
-
-
 
 // 네트워크 장애 시 전송 실패한 로그를 localStorage에 보관했다가 재연결 시 재전송
 const FLUSH_INTERVAL_MS = 10_000;
@@ -40,10 +40,18 @@ function savePendingQueue(queue: PendingHistoryItem[]): void {
   }
 }
 
+const SCAN_COOLDOWN_MS = 15_000;
+const SCAN_AZ = 0.4;            // rad/s 회전 속도
+const SCAN_PUBLISH_INTERVAL_MS = 150; // DriveController watchdog 주기와 동일
+
 function useAIStream(): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const scanIntervalsRef = useRef<ReturnType<typeof setInterval>[]>([]);
+  const scanInProgressRef = useRef(false);
+  const lastScanTimeRef = useRef(0);
 
   const setDetection = useRobotStore((s) => s.setDetection);
   const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
@@ -59,6 +67,71 @@ function useAIStream(): void {
 
   const pendingQueueRef = useRef<PendingHistoryItem[]>(loadPendingQueue(fastapiUrl));
   const isFlushingRef = useRef(false);
+
+  function clearScanTimers() {
+    scanTimersRef.current.forEach(clearTimeout);
+    scanTimersRef.current = [];
+    scanIntervalsRef.current.forEach(clearInterval);
+    scanIntervalsRef.current = [];
+    if (scanInProgressRef.current) {
+      publishCmdVel(0, 0);
+      scanInProgressRef.current = false;
+    }
+  }
+
+  // confidence ≥ threshold 탐지 시 로봇이 좌→우→복귀 스캔 동작 (약 8초)
+  // 각 구간마다 150ms 간격으로 cmd_vel 재전송 (ROS watchdog 대응)
+  // E-Stop·Auto Scan Off·ROS 단절 시 즉시 중단
+  function triggerAutoScan() {
+    const now = Date.now();
+    if (scanInProgressRef.current || now - lastScanTimeRef.current < SCAN_COOLDOWN_MS) return;
+    if (!useRobotStore.getState().rosConnected) return;
+
+    scanInProgressRef.current = true;
+    lastScanTimeRef.current = now;
+
+    function startPhase(az: number): ReturnType<typeof setInterval> {
+      publishCmdVel(0, az);
+      const id = setInterval(() => publishCmdVel(0, az), SCAN_PUBLISH_INTERVAL_MS);
+      scanIntervalsRef.current.push(id);
+      return id;
+    }
+
+    function stillActive(): boolean {
+      return (
+        useSettingsStore.getState().autoScanEnabled &&
+        useRobotStore.getState().rosConnected
+      );
+    }
+
+    const i1 = startPhase(SCAN_AZ);
+    const t1 = setTimeout(() => {
+      clearInterval(i1);
+      if (!stillActive()) { clearScanTimers(); return; }
+
+      const i2 = startPhase(-SCAN_AZ);
+      const t2 = setTimeout(() => {
+        clearInterval(i2);
+        if (!stillActive()) { clearScanTimers(); return; }
+
+        const i3 = startPhase(SCAN_AZ);
+        const t3 = setTimeout(() => {
+          clearInterval(i3);
+          publishCmdVel(0, 0);
+          scanInProgressRef.current = false;
+          scanTimersRef.current = [];
+          scanIntervalsRef.current = [];
+        }, 2000);
+        scanTimersRef.current.push(t3);
+      }, 4000);
+      scanTimersRef.current.push(t2);
+    }, 2000);
+    scanTimersRef.current.push(t1);
+  }
+
+  useEffect(() => {
+    registerCancelAutoScan(clearScanTimers);
+  }, []); // clearScanTimers는 stable ref만 참조하므로 deps 불필요
 
   useEffect(() => {
     // zustand 스토어 구독으로 pose 변경 시마다 ref 갱신
@@ -181,6 +254,12 @@ function useAIStream(): void {
           setDetection(detection);
 
           if (cls === "person") {
+            // Auto Scan: snapshot 여부와 무관하게 탐지 즉시 판단
+            const { autoScanEnabled, confidenceThreshold } = useSettingsStore.getState();
+            if (autoScanEnabled && data.confidence >= confidenceThreshold) {
+              triggerAutoScan();
+            }
+
             // snapshot_url 없는 탐지는 로그에 기록하지 않음
             if (!data.snapshot_url) return;
 
@@ -221,6 +300,7 @@ function useAIStream(): void {
 
     return () => {
       isMounted = false;
+      clearScanTimers();
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close();
     };
