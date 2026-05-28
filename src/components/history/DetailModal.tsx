@@ -69,9 +69,9 @@ function ConfidenceDonut({ conf }: { conf: number }) {
   );
 }
 
-function SnapshotCell({ url, alt }: { url?: string; alt: string }) {
+function SnapshotCell({ url, alt, inverted = false }: { url?: string; alt: string; inverted?: boolean }) {
   if (url) {
-    return <img src={url} alt={alt} className="h-full w-full object-cover" />;
+    return <img src={url} alt={alt} className="h-full w-full object-cover" style={inverted ? { filter: "invert(1)" } : undefined} />;
   }
   return (
     <Typography as="p" variant="overline" className="text-center text-mission-text/30 px-2">
@@ -154,17 +154,33 @@ export default function DetailModal({ entry, status, onMarkFalsePositive, onClos
         </div>
 
         {/* Image Display */}
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-            <SnapshotCell
-              url={entry.snapshot_url}
-              alt="Snapshot at detection moment"
-            />
+        {entry.storagePolicy === "original+inverted" && entry.snapshot_url ? (
+          <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex h-40 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+                  <SnapshotCell url={entry.snapshot_url} alt="Original snapshot" />
+                </div>
+                <Typography as="span" variant="overline" className="text-mission-text/30">Original</Typography>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex h-40 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+                  <SnapshotCell url={entry.snapshot_url} alt="Inverted snapshot" inverted />
+                </div>
+                <Typography as="span" variant="overline" className="text-mission-text/30">Inverted</Typography>
+              </div>
+            </div>
           </div>
-          <Typography as="span" variant="overline" className="text-mission-text/30">
-            Detection Snapshot
-          </Typography>
-        </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+              <SnapshotCell url={entry.snapshot_url} alt="Snapshot at detection moment" />
+            </div>
+            <Typography as="span" variant="overline" className="text-mission-text/30">
+              Detection Snapshot
+            </Typography>
+          </div>
+        )}
     </MissionPanel>
   );
 }
