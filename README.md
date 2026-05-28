@@ -53,33 +53,34 @@ capstone-vision-console/
 │   │   │   ├── AIStatusPanel.tsx      # FPS / Frame Delay / Confidence / FREEZE
 │   │   │   ├── AlertFeed.tsx          # 실시간 Detection 카드 피드
 │   │   │   ├── CriticalAlarmOverlay.tsx  # 임계값 초과 시 빨간 테두리 알람
-│   │   │   ├── DriveController.tsx    # 방향 버튼 + E-Stop
+│   │   │   ├── DriveController.tsx    # 방향 버튼 + E-Stop (Auto Scan 취소 연동)
 │   │   │   ├── MiniMap.tsx            # Phase 3 placeholder
 │   │   │   └── VideoStream.tsx        # MJPEG 스트림 + 반전 토글
 │   │   ├── history/
 │   │   │   ├── DetailModal.tsx        # 선택 row 상세 (스냅샷 / 메타데이터)
 │   │   │   ├── DetectionTable.tsx     # Detection 이력 테이블
-│   │   │   └── FilterBar.tsx          # 검색 / 날짜 / Confidence 필터
+│   │   │   └── FilterBar.tsx          # 검색 / 날짜 / Confidence 필터 + CSV 내보내기
 │   │   ├── settings/
-│   │   │   ├── AIConfig.tsx           # Confidence threshold / Audio alarm
+│   │   │   ├── AIConfig.tsx           # Confidence threshold / Audio alarm / Auto Scan
 │   │   │   ├── ConnectionForm.tsx     # Robot IP / Rosbridge Port / Backend URL
 │   │   │   ├── DiagnosticsMonitor.tsx # 연결 상태 진단 패널
 │   │   │   └── StorageSettings.tsx    # Storage policy 선택
 │   │   └── ui/                        # 공통 UI 컴포넌트 (Button, Typography 등)
 │   ├── hooks/
-│   │   ├── useAIStream.ts             # AI WebSocket 연결 / 재연결 / Detection log
+│   │   ├── useAIStream.ts             # AI WebSocket 연결 / 재연결 / Detection log / Auto Scan
 │   │   ├── useAlarmSound.ts           # Detection 발생 시 오디오 알람
 │   │   ├── useFastapiPing.ts          # FastAPI /ping 폴링 및 latency 측정
 │   │   ├── useRosConnection.ts        # ROS Bridge 연결 / battery / pose 구독
 │   │   └── useVideoCapture.ts         # canvas 기반 프레임 캡처
 │   ├── lib/
+│   │   ├── autoScanController.ts      # Auto Scan E-Stop 취소 싱글턴
 │   │   ├── confidenceTone.ts          # confidence → UI tone 변환 유틸
 │   │   ├── cx.ts                      # className 병합 유틸
-│   │   ├── historyApi.ts              # FastAPI history append / fetch
+│   │   ├── historyApi.ts              # FastAPI history append / fetch / threshold 동기화
 │   │   └── rosClient.ts               # ROS /cmd_vel publish
 │   ├── pages/
 │   │   ├── Dashboard.tsx              # 카메라 + AI 상태 + 드라이브 제어
-│   │   ├── History.tsx                # Detection 이력 조회 / 필터
+│   │   ├── History.tsx                # Detection 이력 조회 / 필터 / CSV 내보내기
 │   │   └── Settings.tsx               # 연결 설정 / 진단 / AI 설정
 │   ├── store/
 │   │   ├── robotStore.ts              # ROS 연결·Detection·로그 상태 (Zustand)
@@ -123,7 +124,7 @@ Settings 페이지에서 아래 값을 설정합니다. 설정은 `localStorage`
 | MJPEG stream | `http://<jetsonIp>:8080/stream?topic=/cv_camera/image_raw` | Dashboard 영상 표시 |
 | ROS Bridge | `ws://<jetsonIp>:<rosbridgePort>` | 배터리/pose 구독, `/cmd_vel` 발행 |
 | AI WebSocket | `ws://<jetsonIp>:8000/ws/ai_stream` | Detection payload 수신 |
-| FastAPI | `<fastapiUrl>` | ping latency, history append/fetch |
+| FastAPI | `<fastapiUrl>` | ping latency, history DB append/fetch, threshold 동기화 |
 
 ---
 
@@ -146,7 +147,7 @@ ws://<jetsonIp>:<rosbridgePort>
 - `/amcl_pose` (`geometry_msgs/PoseWithCovarianceStamped`) — Detection location 기록
 
 발행 토픽:
-- `/cmd_vel` (`geometry_msgs/Twist`) — 방향 버튼 hold 시 150ms 간격 publish, release 시 zero velocity
+- `/cmd_vel` (`geometry_msgs/Twist`) — 방향 버튼 hold 시 150ms 간격 publish, release 시 zero velocity; Auto Scan 시에도 동일 주기로 publish
 
 ### AI WebSocket
 
@@ -165,7 +166,8 @@ ws://<jetsonIp>:8000/ws/ai_stream
   "fps": 25.0,
   "frame_delay_ms": 45,
   "frame_width": 640,
-  "frame_height": 480
+  "frame_height": 480,
+  "snapshot_url": "http://..."
 }
 ```
 
@@ -173,6 +175,7 @@ ws://<jetsonIp>:8000/ws/ai_stream
 - `class`: `"person"` 또는 `"none"`
 - `frame_width` / `frame_height`: 생략 시 640×480 fallback
 - `bbox`: `frame_width` × `frame_height` 기준 좌표
+- `snapshot_url`: optional 문자열 — 탐지 시 저장된 스냅샷 URL, 없으면 생략. `snapshot_url` 없는 `person` 탐지는 History 로그에 기록되지 않음
 
 ### FastAPI
 
@@ -180,13 +183,15 @@ ws://<jetsonIp>:8000/ws/ai_stream
 GET  <fastapiUrl>/ping
 GET  <fastapiUrl>/api/history
 POST <fastapiUrl>/api/history/log
+POST <fastapiUrl>/api/settings/threshold
 ```
 
 - `GET /ping` — 200 OK 시 TopBar FastAPI 지시등 Connected + latency 표시
-- `GET /api/history` — History 페이지 진입 시 자동 호출, CSV 전체 조회
+- `GET /api/history` — History 페이지 진입 시 자동 호출, 최근 history row JSON 조회
 - `POST /api/history/log` — Detection 발생 시 frontend가 자동 호출 (네트워크 단절 시 localStorage pending queue에 보관 후 재연결 시 drain)
+- `POST /api/settings/threshold` — Settings에서 Confidence Threshold 변경 시 500ms debounce로 자동 호출 (body: `{ "threshold": 50 }`, frontend 0–100 값을 backend 내부 0–1 threshold로 변환)
 
-History row는 CSV 저장을 위한 flat JSON 형식입니다. `snapshot_status`는 원본 snapshot 캡처 여부를 나타내며 `"captured"` 또는 `"unavailable"` 값을 사용합니다.
+History row는 DB 저장을 위한 flat JSON 형식입니다. `snapshot_url`은 스냅샷이 없는 경우 생략 또는 `null`로 응답합니다.
 
 ---
 
@@ -210,8 +215,8 @@ History row는 CSV 저장을 위한 flat JSON 형식입니다. `snapshot_status`
     fps: number;
     frameDelayMs: number;
   };
-  recentLog: DetectionLogEntry[];   // 세션 내 최근 50건 (AlertFeed 소스)
-  historyLog: DetectionLogEntry[];  // CSV + 세션 병합 전체 이력 (History 소스)
+  recentLog: DetectionLogEntry[];   // 세션 내 최근 200건 (AlertFeed 소스)
+  historyLog: DetectionLogEntry[];  // DB 조회 + 세션 병합 이력 (History/CSV export 소스)
 }
 ```
 
@@ -228,6 +233,7 @@ History row는 CSV 저장을 위한 flat JSON 형식입니다. `snapshot_status`
   storagePolicy: "original" | "original+inverted";  // 기본값: "original"
   frameWidth: number;                          // AI 소스 프레임 가로 (기본값: 640)
   frameHeight: number;                         // AI 소스 프레임 세로 (기본값: 480)
+  autoScanEnabled: boolean;                    // 탐지 시 자동 좌우 스캔 여부 (기본값: false)
 }
 ```
 
