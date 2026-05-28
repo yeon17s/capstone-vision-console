@@ -11,9 +11,11 @@ interface FilterBarProps {
   fetchStatus: "idle" | "loading" | "error";
   onChange: (f: Filters) => void;
   onApply: () => void;
+  onExport: () => void;
+  exportCount: number;
 }
 
-export default function FilterBar({ filters, fetchStatus, onChange, onApply }: FilterBarProps) {
+export default function FilterBar({ filters, fetchStatus, onChange, onApply, onExport, exportCount }: FilterBarProps) {
   function set<K extends keyof Filters>(key: K, value: Filters[K]) {
     onChange({ ...filters, [key]: value });
   }
@@ -78,6 +80,13 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply }: F
         {/* Apply */}
         <Button onClick={onApply} variant="infoOutline" size="md" className="w-full py-1.5">
           <Typography as="span" variant="controlStrong" tone="info">Apply Filter</Typography>
+        </Button>
+
+        {/* Export CSV */}
+        <Button onClick={onExport} variant="panel" size="md" className="mt-2 w-full py-1.5" disabled={exportCount === 0}>
+          <Typography as="span" variant="controlStrong" tone={exportCount > 0 ? "default" : "muted"}>
+            Export CSV ({exportCount})
+          </Typography>
         </Button>
       </MissionPanel>
 

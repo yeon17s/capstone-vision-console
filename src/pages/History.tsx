@@ -82,7 +82,10 @@ export default function History() {
     return () => { cancelled = true; };
   }, [fastapiUrl, mergeHistoryLog]);
 
+  // 테이블 표시용: 실 데이터 없으면 mock 한 줄 보여줌
   const entries: DetectionLogEntry[] = historyLog.length > 0 ? historyLog : [MOCK_ENTRY];
+  // 내보내기용: mock 제외, 실 데이터만
+  const hasMock = historyLog.length === 0;
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
@@ -99,6 +102,8 @@ export default function History() {
   }, [entries, appliedFilters]);
 
   const selectedEntry = selectedIdx !== null ? (filteredEntries[selectedIdx] ?? null) : null;
+  // mock 행은 내보내기 제외 — mock일 때 exportEntries는 항상 빈 배열
+  const exportEntries = hasMock ? [] : filteredEntries;
 
   function getStatus(entry: DetectionLogEntry): RowStatus {
     return statusOverride[entry.timestamp] ?? "Confirmed";
@@ -107,6 +112,33 @@ export default function History() {
   function handleApplyFilter() {
     setAppliedFilters(pendingFilters);
     setSelectedIdx(null);
+  }
+
+  function handleExportCsv() {
+    const headers = ["Timestamp", "Class", "Confidence (%)", "FPS", "Frame Delay (ms)", "Pose X", "Pose Y", "Pose Yaw", "Status"];
+    const rows = exportEntries.map((e) => [
+      e.timestamp,
+      e.class,
+      e.confidence.toFixed(1),
+      e.fps.toFixed(1),
+      String(e.frameDelayMs),
+      e.pose?.x.toFixed(3) ?? "",
+      e.pose?.y.toFixed(3) ?? "",
+      e.pose?.yaw.toFixed(3) ?? "",
+      getStatus(e),
+    ]);
+    const csv = [headers, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `detection-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   }
 
   const handleMarkFalsePositive = useCallback(() => {
@@ -140,6 +172,8 @@ export default function History() {
         fetchStatus={fetchStatus}
         onChange={setPendingFilters}
         onApply={handleApplyFilter}
+        onExport={handleExportCsv}
+        exportCount={exportEntries.length}
       />
 
       {/* Detection Table */}
