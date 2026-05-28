@@ -15,6 +15,17 @@ export default function Dashboard() {
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   const recentLog = useRobotStore((s) => s.recentLog);
+  const historyLog = useRobotStore((s) => s.historyLog);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const totalCount = historyLog.length;
+  const todayCount = historyLog.filter((e) => e.timestamp.startsWith(todayStr)).length;
+  const avgFps = recentLog.length > 0
+    ? recentLog.reduce((s, e) => s + e.fps, 0) / recentLog.length
+    : null;
+  const avgConf = recentLog.length > 0
+    ? recentLog.reduce((s, e) => s + e.confidence, 0) / recentLog.length
+    : null;
 
   const handleFreeze = () => {
     const latestUrl = recentLog.find((e) => e.snapshot_url)?.snapshot_url;
@@ -61,6 +72,21 @@ export default function Dashboard() {
               </Button>
             </div>
           )}
+        </div>
+
+        {/* KPI Stats Bar */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: "TOTAL DETECTIONS", value: totalCount > 0 ? String(totalCount) : "—" },
+            { label: "TODAY", value: todayCount > 0 ? String(todayCount) : "—" },
+            { label: "AVG FPS", value: avgFps !== null ? avgFps.toFixed(1) : "—" },
+            { label: "AVG CONF", value: avgConf !== null ? avgConf.toFixed(1) + "%" : "—" },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex flex-col items-center gap-0.5 rounded-[10px] border border-mission-border bg-mission-panel px-3 py-2">
+              <Typography as="span" variant="overline" tone="subtle" className="tracking-[0.12em]">{label}</Typography>
+              <Typography as="span" variant="monoStrong" className="text-mission-info">{value}</Typography>
+            </div>
+          ))}
         </div>
 
         {/* AI Detection Status Strip */}
