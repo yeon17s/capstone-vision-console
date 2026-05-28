@@ -4,6 +4,7 @@ import Typography from "../ui/Typography";
 import MissionPanel from "../ui/MissionPanel";
 import StatusIndicator from "../ui/StatusIndicator";
 import { confTone } from "../../lib/confidenceTone";
+import { detectionLabel } from "../../lib/detectionLabel";
 
 interface DetectionTableProps {
   entries: DetectionLogEntry[];
@@ -24,7 +25,7 @@ const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
   FalsePositive: "muted",
 };
 
-const COLS = ["Timestamp", "Conf (%)", "Status"];
+const COLS = ["Timestamp", "Label", "Conf (%)", "Status"];
 
 export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect }: DetectionTableProps) {
   return (
@@ -71,6 +72,7 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
                     ].join(" ")}
                   >
                     <td className="px-4 py-2"><Typography as="span" variant="mono" className="text-mission-text/90">{row.timestamp}</Typography></td>
+                    <td className="px-4 py-2"><Typography as="span" variant="overline" className="text-mission-text/70">{detectionLabel(row.class).short}</Typography></td>
                     <td className="px-4 py-2">
                       <StatusIndicator
                         tone={confTone(row.confidence)}
