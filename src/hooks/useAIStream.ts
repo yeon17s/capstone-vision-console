@@ -4,6 +4,7 @@ import useSettingsStore, { isValidFrameDimension } from "../store/settingsStore"
 import { appendHistoryLog } from "../lib/historyApi";
 import { publishCmdVel } from "../lib/rosClient";
 import { registerCancelAutoScan } from "../lib/autoScanController";
+import { registerClearPendingQueue } from "../lib/pendingQueueController";
 import type { DetectionLogEntry } from "../store/robotStore";
 
 // 네트워크 장애 시 전송 실패한 로그를 localStorage에 보관했다가 재연결 시 재전송
@@ -132,6 +133,13 @@ function useAIStream(): void {
   useEffect(() => {
     registerCancelAutoScan(clearScanTimers);
   }, []); // clearScanTimers는 stable ref만 참조하므로 deps 불필요
+
+  useEffect(() => {
+    registerClearPendingQueue(() => {
+      pendingQueueRef.current = [];
+      savePendingQueue([]);
+    });
+  }, []);
 
   useEffect(() => {
     // zustand 스토어 구독으로 pose 변경 시마다 ref 갱신
