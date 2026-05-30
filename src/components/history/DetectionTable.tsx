@@ -11,6 +11,7 @@ interface DetectionTableProps {
   selectedIdx: number | null;
   getStatus: (entry: DetectionLogEntry) => RowStatus;
   onSelect: (idx: number) => void;
+  totalCount?: number;
 }
 
 function confColor(conf: number): string {
@@ -27,7 +28,9 @@ const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
 
 const COLS = ["Timestamp", "Label", "Conf (%)", "Status"];
 
-export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect }: DetectionTableProps) {
+export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect, totalCount }: DetectionTableProps) {
+  const hiddenCount = totalCount !== undefined && totalCount > 200 ? totalCount - 200 : 0;
+
   return (
     <MissionPanel
       className="h-full"
@@ -35,6 +38,11 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
       headerRight={<Typography as="span" variant="monoStrong" className="text-mission-text/40">{entries.length} records</Typography>}
       bodyClassName="min-h-0 flex-1 overflow-y-auto p-0"
       compactBody
+      footer={hiddenCount > 0 ? (
+        <div className="flex justify-end">
+          <Typography as="span" variant="mono" className="text-mission-text/40">+{hiddenCount} logs</Typography>
+        </div>
+      ) : undefined}
     >
         {entries.length === 0 ? (
           /* Empty State */

@@ -88,6 +88,18 @@ export async function syncConfidenceThreshold(baseUrl: string, threshold: number
   }
 }
 
+export async function fetchHistoryCount(baseUrl: string): Promise<number> {
+  const res = await fetch(`${baseUrl}/api/history/count`);
+  if (!res.ok) throw new Error(`history count failed: ${res.status}`);
+  const data = (await res.json()) as { total: number };
+  return data.total;
+}
+
+export async function deleteAllHistory(baseUrl: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/api/history`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`history delete failed: ${res.status}`);
+}
+
 export async function fetchHistoryLog(baseUrl: string): Promise<DetectionLogEntry[]> {
   const res = await fetch(`${baseUrl}/api/history`);
   if (!res.ok) {

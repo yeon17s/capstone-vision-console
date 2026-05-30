@@ -27,7 +27,6 @@ export interface DetectionLogEntry extends Detection {
   timestamp: string;
   snapshot_url?: string;
   pose?: Pose;
-  storagePolicy?: "original" | "original+inverted";
 }
 
 type ConnectionKey = "rosConnected" | "aiConnected" | "cameraConnected" | "fastapiConnected";

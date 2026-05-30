@@ -154,33 +154,14 @@ export default function DetailModal({ entry, status, onMarkFalsePositive, onClos
         </div>
 
         {/* Image Display */}
-        {entry.storagePolicy === "original+inverted" && entry.snapshot_url ? (
-          <div className="flex flex-col gap-1">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex h-40 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-                  <SnapshotCell url={entry.snapshot_url} alt="Original snapshot" />
-                </div>
-                <Typography as="span" variant="overline" className="text-mission-text/30">Original</Typography>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex h-40 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-                  <SnapshotCell url={entry.snapshot_url} alt="Inverted snapshot" inverted />
-                </div>
-                <Typography as="span" variant="overline" className="text-mission-text/30">Inverted</Typography>
-              </div>
-            </div>
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
+            <SnapshotCell url={entry.snapshot_url} alt="Snapshot at detection moment" />
           </div>
-        ) : (
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-              <SnapshotCell url={entry.snapshot_url} alt="Snapshot at detection moment" />
-            </div>
-            <Typography as="span" variant="overline" className="text-mission-text/30">
-              Detection Snapshot
-            </Typography>
-          </div>
-        )}
+          <Typography as="span" variant="overline" className="text-mission-text/30">
+            Detection Snapshot
+          </Typography>
+        </div>
     </MissionPanel>
   );
 }

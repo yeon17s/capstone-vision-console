@@ -7,7 +7,6 @@ interface SettingsData {
   confidenceThreshold: number;
   audioAlarmEnabled: boolean;
   volume: number;
-  storagePolicy: "original" | "original+inverted";
   frameWidth: number;   // AI 소스 프레임 크기 — WS 메시지에 frame_width 없을 때 폴백
   frameHeight: number;
   autoScanEnabled: boolean;  // 탐지 시 로봇 자동 좌우 스캔 여부
@@ -33,7 +32,6 @@ const defaultSettings: SettingsData = {
   confidenceThreshold: 50,  // 0~100 범위, robotStore.detection.confidence와 스케일 일치
   audioAlarmEnabled: true,
   volume: 70,
-  storagePolicy: "original",
   frameWidth: DEFAULT_FRAME_WIDTH,
   frameHeight: DEFAULT_FRAME_HEIGHT,
   autoScanEnabled: false,
@@ -65,7 +63,6 @@ function toSettingsData(settings: SettingsData): SettingsData {
     confidenceThreshold: settings.confidenceThreshold,
     audioAlarmEnabled: settings.audioAlarmEnabled,
     volume: settings.volume,
-    storagePolicy: settings.storagePolicy,
     frameWidth: settings.frameWidth,
     frameHeight: settings.frameHeight,
     autoScanEnabled: settings.autoScanEnabled,

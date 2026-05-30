@@ -4,7 +4,7 @@ import useSettingsStore from "../store/settingsStore";
 import DetailModal from "../components/history/DetailModal";
 import DetectionTable from "../components/history/DetectionTable";
 import FilterBar from "../components/history/FilterBar";
-import { fetchHistoryLog } from "../lib/historyApi";
+import { fetchHistoryLog, fetchHistoryCount } from "../lib/historyApi";
 
 export type RowStatus = "Confirmed" | "Pending" | "FalsePositive";
 
@@ -60,6 +60,7 @@ export default function History() {
   const fastapiUrl = useSettingsStore((s) => s.fastapiUrl);
 
   const [fetchStatus, setFetchStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [pendingFilters, setPendingFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(0);
@@ -69,10 +70,11 @@ export default function History() {
     // cancelled 플래그: fastapiUrl 변경 시 이전 요청 결과가 늦게 도착해도 무시
     let cancelled = false;
     setFetchStatus("loading");
-    fetchHistoryLog(fastapiUrl)
-      .then((entries) => {
+    Promise.all([fetchHistoryLog(fastapiUrl), fetchHistoryCount(fastapiUrl)])
+      .then(([entries, total]) => {
         if (cancelled) return;
         mergeHistoryLog(entries);
+        setTotalCount(total);
         setFetchStatus("idle");
       })
       .catch(() => {
@@ -183,6 +185,7 @@ export default function History() {
           selectedIdx={selectedIdx}
           getStatus={getStatus}
           onSelect={setSelectedIdx}
+          totalCount={totalCount ?? undefined}
         />
       </section>
 
