@@ -37,7 +37,10 @@ Detailed runtime/API contracts extracted from the capstone specs.
 - `GET /ping`: `DiagnosticsMonitor` health check
 - `GET /api/settings/threshold`: `AIConfig` threshold read
 - `POST /api/settings/threshold`: `AIConfig` threshold update with `{ "threshold": number }`
-- `GET /api/history`: detection history; spec currently says dummy data is acceptable for MVP
+- `GET /api/history`: detection history, returns latest 200 rows ordered by id DESC
+- `GET /api/history/count`: returns `{ "total": N }` — total row count in DB. Frontend shows `+N logs` in DetectionTable footer when total > 200
+- `POST /api/history/log`: append a detection row to the DB
+- `DELETE /api/history`: delete all rows from the history table AND all files in `snapshots/` directory. Frontend calls this from StorageSettings and clears historyLog, recentLog, and pending queue on success
 
 ## AI WebSocket Contract
 - Endpoint: `/ws/ai_stream`
@@ -52,9 +55,14 @@ Detailed runtime/API contracts extracted from the capstone specs.
   "confidence": 85.5,
   "bbox": { "x": 150, "y": 120, "w": 80, "h": 140 },
   "fps": 20.5,
-  "frame_delay_ms": 48
+  "frame_delay_ms": 48,
+  "frame_width": 640,
+  "frame_height": 480,
+  "snapshot_url": "http://<host>/snapshots/<filename>"
 }
 ```
+
+`snapshot_url`은 WebSocket 접속 Host 헤더 기반으로 동적 생성됩니다. IP 하드코딩 없이 접속 경로와 일치합니다. 스냅샷은 누적 저장되며 별도 개수 cap 없음 — `DELETE /api/history` 호출 시 전체 삭제됩니다.
 
 ## AI Runtime Rules
 - `confidence` uses percent scale `0..100`, not `0..1`

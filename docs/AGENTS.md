@@ -37,15 +37,16 @@ Detailed specs:
 - Stores: `src/store/robotStore.ts`, `src/store/settingsStore.ts`
 
 ## State Contract
-- `robotStore`: `rosConnected`, `aiConnected`, `cameraConnected`, `driveMode`, `batteryPercent`, `pose`, `detection`, `detectionLog`
+- `robotStore`: `rosConnected`, `aiConnected`, `cameraConnected`, `fastapiConnected`, `batteryPercent`, `latencyMs`, `pose`, `detection`, `recentLog`, `historyLog`
 - `detection`: `class`, `confidence`, `bbox`, `fps`, `frameDelayMs`
-- Keep only the latest 50 `detectionLog` items
+- `recentLog`: 세션 내 최근 200건 (AlertFeed 소스). `historyLog`: DB 조회 + 세션 병합 전체 이력 (History / CSV export 소스)
 - `settingsStore` defaults:
   - `jetsonIp=192.168.0.45`
   - `rosbridgePort=9090`
   - `fastapiUrl=http://121.156.245.81:8000`
-  - `confidenceThreshold=0.5`
+  - `confidenceThreshold=50` (0–100 퍼센트 스케일)
   - `audioAlarmEnabled=true`
+  - `autoScanEnabled=false`
 
 ## Endpoints
 - MJPEG: `http://<jetsonIp>:8080/stream?topic=/cv_camera/image_raw`
@@ -53,6 +54,12 @@ Detailed specs:
 - AI WS default: `ws://<jetsonIp>:8000/ws/ai_stream`
 - FastAPI default: `http://121.156.245.81:8000`
 - FastAPI docs: `http://121.156.245.81:8000/docs`
+- `GET  /ping` — FastAPI 헬스체크
+- `GET  /api/history` — 최근 200건 조회
+- `GET  /api/history/count` — DB 전체 건수 (`{ "total": N }`)
+- `POST /api/history/log` — 탐지 로그 append
+- `DELETE /api/history` — DB + snapshots/ 전체 삭제
+- `POST /api/settings/threshold` — Confidence Threshold 동기화
 
 ## Runtime Rules
 - AI `class` field: `"person"` or `"none"` only
@@ -72,11 +79,8 @@ Detailed specs:
   - `0–200ms`: normal (green)
   - `200–500ms`: warning (yellow)
   - `> 500ms`: critical (red + warning text)
-- **Archiving** (MVP): snapshot at detection moment + snapshot ~1–2s after
-  - extract via `canvas.toDataURL()` from `<img>` tag
-  - 2 total snapshots per detection
-  - ring-buffer clip approach deferred to June Phase 2
-- **False Positive reporting**: Phase 2 feature; not in MVP
+- **Archiving**: 탐지 발생 시 백엔드가 `snapshots/` 에 원본 이미지 저장. `snapshot_url`은 WebSocket Host 헤더 기반으로 동적 생성 (하드코딩 IP 없음). 스냅샷은 누적 저장, `DELETE /api/history`로 전체 삭제
+- **False Positive reporting**: History 페이지에서 행 선택 후 "Mark as False Positive" 토글. 상태는 `localStorage`에 보관 (DB 저장 없음)
 
 ## Implementation Bias
 - Prefer simple state flow over extra abstraction

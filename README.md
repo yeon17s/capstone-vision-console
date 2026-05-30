@@ -64,7 +64,7 @@ capstone-vision-console/
 │   │   │   ├── AIConfig.tsx           # Confidence threshold / Audio alarm / Auto Scan
 │   │   │   ├── ConnectionForm.tsx     # Robot IP / Rosbridge Port / Backend URL
 │   │   │   ├── DiagnosticsMonitor.tsx # 연결 상태 진단 패널
-│   │   │   └── StorageSettings.tsx    # Storage policy 선택
+│   │   │   └── StorageSettings.tsx    # 로컬 캐시 삭제 / 젯슨 전체 데이터 삭제
 │   │   └── ui/                        # 공통 UI 컴포넌트 (Button, Typography 등)
 │   ├── hooks/
 │   │   ├── useAIStream.ts             # AI WebSocket 연결 / 재연결 / Detection log / Auto Scan
@@ -76,7 +76,8 @@ capstone-vision-console/
 │   │   ├── autoScanController.ts      # Auto Scan E-Stop 취소 싱글턴
 │   │   ├── confidenceTone.ts          # confidence → UI tone 변환 유틸
 │   │   ├── cx.ts                      # className 병합 유틸
-│   │   ├── historyApi.ts              # FastAPI history append / fetch / threshold 동기화
+│   │   ├── historyApi.ts              # FastAPI history append / fetch / count / delete / threshold 동기화
+│   │   ├── pendingQueueController.ts  # pending queue 외부 초기화 싱글턴
 │   │   └── rosClient.ts               # ROS /cmd_vel publish
 │   ├── pages/
 │   │   ├── Dashboard.tsx              # 카메라 + AI 상태 + 드라이브 제어
@@ -180,18 +181,24 @@ ws://<jetsonIp>:8000/ws/ai_stream
 ### FastAPI
 
 ```
-GET  <fastapiUrl>/ping
-GET  <fastapiUrl>/api/history
-POST <fastapiUrl>/api/history/log
-POST <fastapiUrl>/api/settings/threshold
+GET    <fastapiUrl>/ping
+GET    <fastapiUrl>/api/history
+GET    <fastapiUrl>/api/history/count
+POST   <fastapiUrl>/api/history/log
+DELETE <fastapiUrl>/api/history
+POST   <fastapiUrl>/api/settings/threshold
 ```
 
 - `GET /ping` — 200 OK 시 TopBar FastAPI 지시등 Connected + latency 표시
-- `GET /api/history` — History 페이지 진입 시 자동 호출, 최근 history row JSON 조회
+- `GET /api/history` — History 페이지 진입 시 자동 호출, 최근 200건 history row JSON 조회
+- `GET /api/history/count` — DB 전체 로그 건수 조회 (`{ "total": N }`). 200건 초과 시 DetectionTable footer에 `+N logs` 표시
 - `POST /api/history/log` — Detection 발생 시 frontend가 자동 호출 (네트워크 단절 시 localStorage pending queue에 보관 후 재연결 시 drain)
+- `DELETE /api/history` — Settings의 Delete All Data 버튼 클릭 시 호출. DB 전체 삭제 + snapshots/ 디렉터리 파일 모두 삭제. 성공 시 frontend의 historyLog·recentLog·pending queue도 함께 초기화
 - `POST /api/settings/threshold` — Settings에서 Confidence Threshold 변경 시 500ms debounce로 자동 호출 (body: `{ "threshold": 50 }`, frontend 0–100 값을 backend 내부 0–1 threshold로 변환)
 
 History row는 DB 저장을 위한 flat JSON 형식입니다. `snapshot_url`은 스냅샷이 없는 경우 생략 또는 `null`로 응답합니다.
+
+스냅샷 URL은 WebSocket 접속 Host 헤더 기반으로 동적 생성됩니다 (`http://<host>/snapshots/<filename>`). 별도 IP 하드코딩 없이 접속 경로와 일치합니다.
 
 ---
 
@@ -230,7 +237,6 @@ History row는 DB 저장을 위한 flat JSON 형식입니다. `snapshot_url`은 
   confidenceThreshold: number;                 // 0–100 (기본값: 50)
   audioAlarmEnabled: boolean;                  // 기본값: true
   volume: number;                              // 0–100 (기본값: 70)
-  storagePolicy: "original" | "original+inverted";  // 기본값: "original"
   frameWidth: number;                          // AI 소스 프레임 가로 (기본값: 640)
   frameHeight: number;                         // AI 소스 프레임 세로 (기본값: 480)
   autoScanEnabled: boolean;                    // 탐지 시 자동 좌우 스캔 여부 (기본값: false)

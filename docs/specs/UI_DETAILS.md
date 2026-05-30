@@ -76,7 +76,7 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 - `DetailModal`:
   - time and map location
   - large confidence visualization
-  - original image + inverted image side-by-side (based on detection-moment snapshot)
+  - detection-moment snapshot 단일 이미지 표시
   - before/after comparison slider (Phase 2 with ring-buffer clips)
 
 ## Settings
@@ -97,10 +97,9 @@ Detailed UI/component contracts extracted from the capstone interface spec.
 - Spec also mentions volume control
 
 ### StorageSettings
-- Storage policy option:
-  - save original only
-  - save original + inverted
-- Local cleanup action for cached data and old logs
+- Storage Path: 젯슨 스냅샷 저장 경로 표시 (`snapshots/`)
+- Clear Local Cache: 브라우저 localStorage의 설정값·FP overrides 초기화
+- Delete All Data (Jetson): `DELETE /api/history` 호출 — DB 전체 행 삭제 + snapshots/ 파일 삭제. 성공 시 frontend historyLog·recentLog·pending queue 초기화. 2단계 확인(Confirm/Cancel) UI
 
 ## Shared Data Mapping
 - `/cv_camera/image_raw`: video, freeze-frame source

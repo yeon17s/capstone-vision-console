@@ -74,7 +74,9 @@
 
 - [ ] `GET /ping` → 200 OK 응답 → TopBar FastAPI 지시등 `Connected` + latency ms 표시
 - [ ] `POST /api/history/log` → history DB row append 확인 (payload 형식은 아래 참조)
-- [ ] `GET /api/history` → 최근 history row JSON 조회 → History 페이지 로드 시 자동 merge
+- [ ] `GET /api/history` → 최근 200건 history row JSON 조회 → History 페이지 로드 시 자동 merge
+- [ ] `GET /api/history/count` → DB 전체 건수 반환 (`{ "total": N }`) → 200 초과 시 테이블 footer에 `+N logs` 표시 확인
+- [ ] `DELETE /api/history` → DB 전체 삭제 + snapshots/ 파일 삭제 → frontend historyLog·recentLog·pending queue 초기화 확인
 - [ ] `POST /api/settings/threshold` → Confidence Threshold 변경 시 백엔드 적용 확인 (Settings 슬라이더 500ms 후 자동 호출, body: `{ "threshold": 50 }`, backend 내부 0–1 값으로 변환)
 - [ ] 네트워크 단절 후 복구 시 frontend pending queue가 순서대로 drain되는지 확인
 
@@ -137,8 +139,7 @@
 | AI WebSocket 연결/재연결 | ✅ 구현 완료 | 실환경 smoke test 필요 |
 | bbox overlay (object-cover 보정) | ✅ 구현 완료 | 실제 stream bbox 위치 검증 필요 |
 | Detection log (throttle 3초) | ✅ 구현 완료 | — |
-| Snapshot 캡처 (RGB / Inverted) | ✅ 구현 완료 | CORS 환경 검증 필요 |
-| Storage policy 연동 | ✅ 구현 완료 | — |
+| Snapshot 저장 (백엔드) | ✅ 구현 완료 | snapshot_url Host 기반 동적 생성. CORS 환경 검증 필요 |
 | Audio alarm | ✅ 구현 완료 | — |
 | FREEZE 버튼 | ✅ 구현 완료 | — |
 | FastAPI ping / latency | ✅ 구현 완료 | — |
@@ -146,7 +147,9 @@
 | History CSV 내보내기 (Export) | ✅ 구현 완료 | — |
 | Confidence Threshold 백엔드 동기화 | ✅ 구현 완료 | 프론트 0–100 → 백엔드 내부 0–1 변환 포함 |
 | Pending queue drain | ✅ 구현 완료 | 실환경 네트워크 단절 검증 필요 |
-| StorageSettings cleanup 버튼 | ⏸ 비활성화 | Phase 2 이후 구현 |
+| StorageSettings — Clear Local Cache | ✅ 구현 완료 | localStorage 설정값·FP overrides 초기화 |
+| StorageSettings — Delete All Data | ✅ 구현 완료 | DELETE /api/history + frontend 상태 전체 초기화. 실환경 smoke test 필요 |
+| History totalCount (+N logs footer) | ✅ 구현 완료 | GET /api/history/count 연동. 실환경 smoke test 필요 |
 | MiniMap | ⏸ placeholder | Phase 3 보류 |
 
 ---
@@ -174,7 +177,5 @@
 - [ ] `GET /api/history` 조회 및 History 페이지 merge
 - [ ] `POST /api/settings/threshold` 호출 확인 (Settings 슬라이더 조작 후)
 - [ ] Pending queue drain (백엔드 재시작 후)
-- [ ] `storagePolicy === "original"` → inverted snapshot skip
-- [ ] `storagePolicy === "original+inverted"` → inverted snapshot 저장
 - [ ] Audio alarm on/off 및 volume 반영
 - [ ] FREEZE 버튼 캡처 동작
