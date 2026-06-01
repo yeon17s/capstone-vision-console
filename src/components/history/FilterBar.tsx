@@ -23,18 +23,6 @@ export default function FilterBar({ filters, fetchStatus, onChange, onApply, onE
   return (
     <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
       <MissionPanel title="Search & Filter" bodyClassName="p-4">
-        {/* Fetch Status Message */}
-        {fetchStatus === "loading" && (
-          <Typography as="p" variant="overline" tone="subtle" className="mb-3 text-mission-text/50">
-            Loading history from Jetson…
-          </Typography>
-        )}
-        {fetchStatus === "error" && (
-          <Typography as="p" variant="overline" tone="subtle" className="mb-3 text-mission-warning">
-            Could not reach Jetson — showing runtime log only
-          </Typography>
-        )}
-
         {/* Search */}
         <TextInput
           placeholder="Search timestamp..."
