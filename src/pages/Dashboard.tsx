@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import AIOverlay from "../components/dashboard/AIOverlay";
 import AIStatusPanel from "../components/dashboard/AIStatusPanel";
 import AlertFeed from "../components/dashboard/AlertFeed";
-import CriticalAlarmOverlay from "../components/dashboard/CriticalAlarmOverlay";
 import DriveController from "../components/dashboard/DriveController";
 import VideoStream from "../components/dashboard/VideoStream";
 import Button from "../components/ui/Button";
@@ -51,7 +50,6 @@ export default function Dashboard() {
             onToggleInvert={() => setInverted((v) => !v)}
           />
           <AIOverlay />
-          <CriticalAlarmOverlay />
 
           {/* Freeze Frame Overlay */}
           {frozenUrl && (
