@@ -23,7 +23,7 @@ function safeNum(v: number | string | null | undefined, fallback: number): numbe
 }
 
 // DB 행(snake_case) → 프론트엔드 상태(camelCase) 변환
-function fromRow(row: HistoryRow): DetectionLogEntry {
+function fromRow(row: HistoryRow, baseUrl: string): DetectionLogEntry {
   const poseX = safeNum(row.pose_x, NaN);
   const poseY = safeNum(row.pose_y, NaN);
   const poseYaw = safeNum(row.pose_yaw, NaN);
@@ -43,7 +43,9 @@ function fromRow(row: HistoryRow): DetectionLogEntry {
     fps: safeNum(row.fps, 0),
     frameDelayMs: safeNum(row.frame_delay_ms, 0),
     pose: hasPose ? { x: poseX, y: poseY, yaw: poseYaw } : undefined,
-    snapshot_url: row.snapshot_url,
+    snapshot_url: row.snapshot_url
+      ? row.snapshot_url.replace(/^https?:\/\/[^/]+/, baseUrl.replace(/\/$/, ""))
+      : undefined,
   };
 }
 
@@ -108,6 +110,6 @@ export async function fetchHistoryLog(baseUrl: string): Promise<DetectionLogEntr
   const rows = (await res.json()) as HistoryRow[];
   // DB 행을 프론트엔드 타입으로 변환 후 최신순 정렬
   return rows
-    .map(fromRow)
+    .map((row) => fromRow(row, baseUrl))
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 }

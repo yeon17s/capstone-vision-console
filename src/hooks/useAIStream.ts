@@ -274,10 +274,15 @@ function useAIStream(): void {
             // 탐지 시점의 pose를 스냅샷과 함께 기록
             const poseAtDetection = { ...poseRef.current };
 
+            const rawSnapshotUrl = data.snapshot_url;
+            const snapshot_url = rawSnapshotUrl
+              ? rawSnapshotUrl.replace(/^https?:\/\/[^/]+/, fastapiUrlRef.current.replace(/\/$/, ""))
+              : undefined;
+
             const logEntry: DetectionLogEntry = {
               ...detection,
               timestamp: data.timestamp,
-              snapshot_url: data.snapshot_url,
+              snapshot_url,
               pose: poseAtDetection,
             };
             pushDetectionLog(logEntry);
