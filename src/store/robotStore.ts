@@ -41,7 +41,6 @@ interface RobotState {
   pose: Pose;
   detection: Detection;
 
-  // 세션 중 최근 탐지 목록 (메모리 절약을 위해 최대 200개로 제한)
   recentLog: DetectionLogEntry[];
   // 젯슨 DB + 세션 탐지를 합산한 전체 히스토리 (History 페이지 소스)
   historyLog: DetectionLogEntry[];
@@ -57,8 +56,6 @@ interface RobotState {
   mergeHistoryLog: (entries: DetectionLogEntry[]) => void;
   clearDetectionLog: () => void;
 }
-
-const RECENT_LOG_CAP = 200;
 
 const initialDetection: Detection = {
   class: "none",
@@ -95,13 +92,10 @@ const useRobotStore = create<RobotState>((set) => ({
         ? state.historyLog.map((e) => (e.timestamp === entry.timestamp ? entry : e))
         : [entry, ...state.historyLog];
 
-      // recentLog: timestamp 기준 중복 제거 후 최대 개수로 자름
       const existsInRecent = state.recentLog.some((e) => e.timestamp === entry.timestamp);
-      const recentLog = (
-        existsInRecent
-          ? state.recentLog.map((e) => (e.timestamp === entry.timestamp ? entry : e))
-          : [entry, ...state.recentLog]
-      ).slice(0, RECENT_LOG_CAP);
+      const recentLog = existsInRecent
+        ? state.recentLog.map((e) => (e.timestamp === entry.timestamp ? entry : e))
+        : [entry, ...state.recentLog];
 
       return { historyLog, recentLog };
     }),

@@ -70,16 +70,16 @@ export default function History() {
     // cancelled 플래그: fastapiUrl 변경 시 이전 요청 결과가 늦게 도착해도 무시
     let cancelled = false;
     setFetchStatus("loading");
-    Promise.all([fetchHistoryLog(fastapiUrl), fetchHistoryCount(fastapiUrl)])
-      .then(([entries, total]) => {
+    Promise.allSettled([fetchHistoryLog(fastapiUrl), fetchHistoryCount(fastapiUrl)])
+      .then(([logResult, countResult]) => {
         if (cancelled) return;
-        mergeHistoryLog(entries);
-        setTotalCount(total);
-        setFetchStatus("idle");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setFetchStatus("error");
+        if (logResult.status === "fulfilled") {
+          mergeHistoryLog(logResult.value);
+          setTotalCount(countResult.status === "fulfilled" ? countResult.value : null);
+          setFetchStatus("idle");
+        } else {
+          setFetchStatus("error");
+        }
       });
     return () => { cancelled = true; };
   }, [fastapiUrl, mergeHistoryLog]);
@@ -117,16 +117,13 @@ export default function History() {
   }
 
   function handleExportCsv() {
-    const headers = ["Timestamp", "Class", "Confidence (%)", "FPS", "Frame Delay (ms)", "Pose X", "Pose Y", "Pose Yaw", "Status"];
+    const headers = ["Timestamp", "Class", "Confidence (%)", "FPS", "Frame Delay (ms)", "Status"];
     const rows = exportEntries.map((e) => [
       e.timestamp,
       e.class,
       e.confidence.toFixed(1),
       e.fps.toFixed(1),
       String(e.frameDelayMs),
-      e.pose?.x.toFixed(3) ?? "",
-      e.pose?.y.toFixed(3) ?? "",
-      e.pose?.yaw.toFixed(3) ?? "",
       getStatus(e),
     ]);
     const csv = [headers, ...rows]
@@ -186,6 +183,7 @@ export default function History() {
           getStatus={getStatus}
           onSelect={setSelectedIdx}
           totalCount={totalCount ?? undefined}
+          fetchedCount={historyLog.length}
         />
       </section>
 

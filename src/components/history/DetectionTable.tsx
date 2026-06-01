@@ -12,6 +12,7 @@ interface DetectionTableProps {
   getStatus: (entry: DetectionLogEntry) => RowStatus;
   onSelect: (idx: number) => void;
   totalCount?: number;
+  fetchedCount?: number;
 }
 
 function confColor(conf: number): string {
@@ -28,8 +29,9 @@ const STATUS_TONE: Record<RowStatus, "success" | "warning" | "muted"> = {
 
 const COLS = ["Timestamp", "Label", "Conf (%)", "Status"];
 
-export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect, totalCount }: DetectionTableProps) {
-  const hiddenCount = totalCount !== undefined && totalCount > 200 ? totalCount - 200 : 0;
+export default function DetectionTable({ entries, selectedIdx, getStatus, onSelect, totalCount, fetchedCount }: DetectionTableProps) {
+  const displayed = fetchedCount ?? entries.length;
+  const hiddenCount = totalCount !== undefined && totalCount > displayed ? totalCount - displayed : 0;
 
   return (
     <MissionPanel
