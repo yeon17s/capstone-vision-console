@@ -6,6 +6,7 @@ import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import StatusBadge from "../ui/StatusBadge";
 import StatusIndicator from "../ui/StatusIndicator";
+import useSettingsStore from "../../store/settingsStore";
 
 
 interface DetailModalProps {
@@ -87,6 +88,9 @@ const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warnin
 };
 
 export default function DetailModal({ entry, status, onMarkFalsePositive, onClose }: DetailModalProps) {
+  const frameWidth = useSettingsStore((s) => s.frameWidth);
+  const frameHeight = useSettingsStore((s) => s.frameHeight);
+
   if (!entry) {
     return (
       <MissionPanel className="h-full" bodyClassName="flex h-full items-center justify-center py-6">
@@ -153,10 +157,46 @@ export default function DetailModal({ entry, status, onMarkFalsePositive, onClos
           </div>
         </div>
 
-        {/* Image Display */}
+        {/* Image Display with bbox overlay */}
         <div className="flex flex-col items-center gap-1">
-          <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded border border-mission-border bg-mission-bg">
-            <SnapshotCell url={entry.snapshot_url} alt="Snapshot at detection moment" />
+          <div
+            className="relative w-full overflow-hidden rounded border border-mission-border bg-mission-bg"
+            style={{ aspectRatio: `${frameWidth} / ${frameHeight}` }}
+          >
+            {entry.snapshot_url ? (
+              <>
+                <img
+                  src={entry.snapshot_url}
+                  alt="Snapshot at detection moment"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                {entry.bbox.w > 0 && entry.bbox.h > 0 && (
+                  <div
+                    className="absolute rounded-sm border-2 border-mission-critical shadow-mission-glow-red"
+                    style={{
+                      left:   `${(entry.bbox.x / frameWidth)  * 100}%`,
+                      top:    `${(entry.bbox.y / frameHeight) * 100}%`,
+                      width:  `${(entry.bbox.w / frameWidth)  * 100}%`,
+                      height: `${(entry.bbox.h / frameHeight) * 100}%`,
+                    }}
+                  >
+                    <Typography
+                      as="span"
+                      variant="panelTitle"
+                      className="absolute -top-8 left-0 rounded-md bg-mission-critical px-2 py-1 tracking-[0.08em] text-white"
+                    >
+                      Detected | {entry.confidence.toFixed(1)}%
+                    </Typography>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Typography as="p" variant="overline" className="text-center text-mission-text/30 px-2">
+                  No Image Available
+                </Typography>
+              </div>
+            )}
           </div>
           <Typography as="span" variant="overline" className="text-mission-text/30">
             Detection Snapshot
