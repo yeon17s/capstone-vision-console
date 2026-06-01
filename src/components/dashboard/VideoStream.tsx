@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Typography from "../ui/Typography";
 import useSettingsStore from "../../store/settingsStore";
 import useRobotStore from "../../store/robotStore";
@@ -13,6 +13,16 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
   const jetsonIp = useSettingsStore((s) => s.jetsonIp);
   const streamUrl = `http://${jetsonIp}:8000/video_feed`;
   const setConnectionStatus = useRobotStore((s) => s.setConnectionStatus);
+
+  const [retryCount, setRetryCount] = useState(0);
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setRetryCount(0);
+    return () => {
+      if (retryRef.current) clearTimeout(retryRef.current);
+    };
+  }, [streamUrl]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -32,14 +42,21 @@ export default function VideoStream({ imgRef, inverted, onToggleInvert }: VideoS
 
       {/* Video Image */}
       <img
+        key={`${streamUrl}-${retryCount}`}
         ref={imgRef}
         src={streamUrl}
         alt="Camera feed"
         crossOrigin="anonymous"
         className="absolute inset-0 h-full w-full object-cover transition-[filter] duration-150"
         style={inverted ? { filter: "invert(1) hue-rotate(180deg)" } : undefined}
-        onLoad={() => setConnectionStatus("cameraConnected", true)}
-        onError={() => setConnectionStatus("cameraConnected", false)}
+        onLoad={() => {
+          if (retryRef.current) clearTimeout(retryRef.current);
+          setConnectionStatus("cameraConnected", true);
+        }}
+        onError={() => {
+          setConnectionStatus("cameraConnected", false);
+          retryRef.current = setTimeout(() => setRetryCount((c) => c + 1), 2000);
+        }}
       />
 
       {/* Top Bar: Stream Title + Invert Toggle */}
