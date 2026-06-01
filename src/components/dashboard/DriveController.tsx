@@ -13,8 +13,8 @@ const DRIVE_PUBLISH_INTERVAL_MS = 150;
 const ESTOP_FEEDBACK_MS = 1600;
 
 const DRIVE_VECTORS: Record<"forward" | "backward" | "left" | "right", { lx: number; az: number }> = {
-  forward:  { lx:  LINEAR_SPEED,  az: 0 },
-  backward: { lx: -LINEAR_SPEED,  az: 0 },
+  forward:  { lx: -LINEAR_SPEED,  az: 0 },
+  backward: { lx:  LINEAR_SPEED,  az: 0 },
   left:     { lx: 0, az:  ANGULAR_SPEED },
   right:    { lx: 0, az: -ANGULAR_SPEED },
 };
