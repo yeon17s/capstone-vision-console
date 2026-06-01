@@ -41,15 +41,6 @@ function AlertCard({ entry }: { entry: DetectionLogEntry }) {
             <Typography as="span" variant="emphasis" className="text-mission-critical">{detectionLabel(entry.class).full}</Typography>
             <StatusIndicator tone={tone} />
           </div>
-
-          {/* Location */}
-          {entry.pose ? (
-            <Typography variant="control" className="text-mission-text/60">
-              X: {entry.pose.x.toFixed(2)} / Y: {entry.pose.y.toFixed(2)}
-            </Typography>
-          ) : (
-            <Typography variant="control" className="text-mission-text/30">Location unavailable</Typography>
-          )}
         </div>
       </div>
     </MissionCard>
