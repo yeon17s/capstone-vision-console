@@ -3,6 +3,7 @@ import MissionPanel from "../ui/MissionPanel";
 import Button from "../ui/Button";
 import StatusIndicator from "../ui/StatusIndicator";
 import useRobotStore from "../../store/robotStore";
+import { hasRenderableDetection } from "../../lib/detectionFilter";
 
 interface StatusCellProps {
   label: string;
@@ -42,6 +43,7 @@ export default function AIStatusPanel({ inverted = false, onFreeze }: AIStatusPa
   const frameDelayMs = detection.frameDelayMs;
   const frameDelayToneClass = getFrameDelayTone(frameDelayMs);
   const frameDelayBadgeTone = getFrameDelayBadgeTone(frameDelayMs);
+  const detected = hasRenderableDetection(detection);
 
   const confidenceTone: "success" | "warning" | "danger" =
     detection.confidence >= 80 ? "success" : detection.confidence >= 50 ? "warning" : "danger";
@@ -62,8 +64,8 @@ export default function AIStatusPanel({ inverted = false, onFreeze }: AIStatusPa
         {/* Last Detected */}
         <StatusCell
           label="Last Detected"
-          value={detection.class === "person" ? "Detected" : "No Detection"}
-          valueClass={detection.class === "person" ? "text-mission-critical" : "text-mission-text"}
+          value={detected ? "Detected" : "No Detection"}
+          valueClass={detected ? "text-mission-critical" : "text-mission-text"}
         />
 
         {/* Confidence */}

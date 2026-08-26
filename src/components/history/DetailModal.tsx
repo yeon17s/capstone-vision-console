@@ -7,6 +7,7 @@ import Button from "../ui/Button";
 import StatusBadge from "../ui/StatusBadge";
 import StatusIndicator from "../ui/StatusIndicator";
 import useSettingsStore from "../../store/settingsStore";
+import { hasRenderableDetection } from "../../lib/detectionFilter";
 
 
 interface DetailModalProps {
@@ -70,17 +71,6 @@ function ConfidenceDonut({ conf }: { conf: number }) {
   );
 }
 
-function SnapshotCell({ url, alt, inverted = false }: { url?: string; alt: string; inverted?: boolean }) {
-  if (url) {
-    return <img src={url} alt={alt} className="h-full w-full object-cover" style={inverted ? { filter: "invert(1)" } : undefined} />;
-  }
-  return (
-    <Typography as="p" variant="overline" className="text-center text-mission-text/30 px-2">
-      No Image Available
-    </Typography>
-  );
-}
-
 const STATUS_LABEL: Record<RowStatus, { label: string; tone: "success" | "warning" | "muted" }> = {
   Confirmed:     { label: "Confirmed", tone: "success" },
   Pending:       { label: "Pending Review", tone: "warning" },
@@ -101,6 +91,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive, onClos
 
   const { label: statusLabel, tone: statusTone } = STATUS_LABEL[status];
   const isFalsePositive = status === "FalsePositive";
+  const showBbox = hasRenderableDetection(entry);
 
   return (
     <MissionPanel
@@ -170,7 +161,7 @@ export default function DetailModal({ entry, status, onMarkFalsePositive, onClos
                   alt="Snapshot at detection moment"
                   className="absolute inset-0 h-full w-full object-cover"
                 />
-                {entry.bbox.w > 0 && entry.bbox.h > 0 && (
+                {showBbox && (
                   <div
                     className="absolute rounded-sm border-2 border-mission-critical shadow-mission-glow-red"
                     style={{

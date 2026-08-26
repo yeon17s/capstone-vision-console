@@ -6,6 +6,7 @@ import useSettingsStore, {
   DEFAULT_FRAME_WIDTH,
   isValidFrameDimension,
 } from "../../store/settingsStore";
+import { hasRenderableDetection } from "../../lib/detectionFilter";
 
 interface RenderedRect {
   left: number;
@@ -51,7 +52,7 @@ export default function AIOverlay() {
     return () => ro.disconnect();
   }, []);
 
-  const isVisible = detection.class === "person";
+  const isVisible = hasRenderableDetection(detection);
   const srcRatio = sourceW / sourceH;
   const { left: imgLeft, top: imgTop, width: imgW, height: imgH } =
     getRenderedRect(containerSize.w, containerSize.h, srcRatio);
@@ -66,7 +67,7 @@ export default function AIOverlay() {
 
   return (
     <div ref={containerRef} className="pointer-events-none absolute inset-0 rounded-[20px]">
-      {isVisible && containerSize.w > 0 && (
+      {isVisible && containerSize.w > 0 && containerSize.h > 0 && (
         <div
           className="absolute rounded-sm border-2 border-mission-critical shadow-mission-glow-red"
           style={{ left: boxLeft, top: boxTop, width: boxW, height: boxH }}

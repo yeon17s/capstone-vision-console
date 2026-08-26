@@ -40,11 +40,6 @@ export default function DetectionTable({ entries, selectedIdx, getStatus, onSele
       headerRight={<Typography as="span" variant="monoStrong" className="text-mission-text/40">{entries.length} records</Typography>}
       bodyClassName="min-h-0 flex-1 overflow-y-auto p-0"
       compactBody
-      footer={hiddenCount > 0 ? (
-        <div className="flex justify-end">
-          <Typography as="span" variant="mono" className="text-mission-text/40">+{hiddenCount} logs</Typography>
-        </div>
-      ) : undefined}
     >
         {entries.length === 0 ? (
           /* Empty State */

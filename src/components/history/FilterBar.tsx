@@ -10,7 +10,7 @@ interface FilterBarProps {
   filters: Filters;
   fetchStatus: "idle" | "loading" | "error";
   onChange: (f: Filters) => void;
-  onApply: () => void;
+  onApply: () => void;  
   onExport: () => void;
   exportCount: number;
 }

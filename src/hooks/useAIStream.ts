@@ -5,6 +5,7 @@ import { appendHistoryLog } from "../lib/historyApi";
 import { publishCmdVel } from "../lib/rosClient";
 import { registerCancelAutoScan } from "../lib/autoScanController";
 import { registerClearPendingQueue } from "../lib/pendingQueueController";
+import { hasRenderableDetection, normalizeDetectionPayload } from "../lib/detectionFilter";
 import type { DetectionLogEntry } from "../store/robotStore";
 
 // 네트워크 장애 시 전송 실패한 로그를 localStorage에 보관했다가 재연결 시 재전송
@@ -229,7 +230,7 @@ function useAIStream(): void {
             timestamp: string;
             class: string;
             confidence: number;
-            bbox: { x: number; y: number; w: number; h: number };
+            bbox?: { x: number; y: number; w: number; h: number };
             fps: number;
             frame_delay_ms: number;
             frame_width?: number;
@@ -237,34 +238,36 @@ function useAIStream(): void {
             snapshot_url?: string;
           };
 
+          const settings = useSettingsStore.getState();
+          const sourceW = isValidFrameDimension(data.frame_width)
+            ? data.frame_width
+            : settings.frameWidth;
+          const sourceH = isValidFrameDimension(data.frame_height)
+            ? data.frame_height
+            : settings.frameHeight;
+
           // 백엔드가 보내는 프레임 크기가 설정값과 다르면 동기화 (AIOverlay 좌표 계산에 사용)
           if (
             isValidFrameDimension(data.frame_width) &&
             isValidFrameDimension(data.frame_height)
           ) {
-            const { frameWidth, frameHeight } = useSettingsStore.getState();
+            const { frameWidth, frameHeight } = settings;
             if (frameWidth !== data.frame_width || frameHeight !== data.frame_height) {
               updateSettings({ frameWidth: data.frame_width, frameHeight: data.frame_height });
             }
           }
 
-          // 알 수 없는 클래스는 "none"으로 정규화
-          const cls = data.class === "person" || data.class === "none" ? data.class : "none";
-
-          const detection = {
-            class: cls,
-            confidence: data.confidence,
-            bbox: data.bbox,
-            fps: data.fps,
-            frameDelayMs: data.frame_delay_ms,
-          };
-
+          const detection = normalizeDetectionPayload(
+            data,
+            settings.confidenceThreshold,
+            sourceW,
+            sourceH
+          );
           setDetection(detection);
 
-          if (cls === "person") {
+          if (hasRenderableDetection(detection)) {
             // Auto Scan: snapshot 여부와 무관하게 탐지 즉시 판단
-            const { autoScanEnabled, confidenceThreshold } = useSettingsStore.getState();
-            if (autoScanEnabled && data.confidence >= confidenceThreshold) {
+            if (settings.autoScanEnabled) {
               triggerAutoScan();
             }
 
